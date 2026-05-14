@@ -1,0 +1,7 @@
+no=int(input("Enter a number"))
+if no>15:
+    print("The number is greater than 15")
+elif no==15:
+    print("The number is equal to 15")
+else:
+    print("The number is not greater than 15")

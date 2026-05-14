@@ -1,0 +1,19 @@
+x=10.5
+y=10
+if (type(x)is int):
+    print("x is an integer")
+else:
+    print("x isn't an integer")
+a=21
+b=24
+if a is not b:
+    print("Both have same identity")
+else:
+    print("They dont have the same identity")
+
+
+
+q=10
+r=10
+print("q>>1=", q>>1)
+print("a<<1=",a<<1)
