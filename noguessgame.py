@@ -1,7 +1,6 @@
 import random
 no= random.randint (1,50)
 lives =5
-print(no)
 while lives>=1:
     gs=int(input("\nTry to guess the secret no."))
     if gs==no:
