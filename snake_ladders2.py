@@ -151,18 +151,7 @@ elif no==3:
                 print("P2 score=", score2)
                 print("P3 score=", score3)
 elif no==4:
-    while score>=100:
-        print("P1 wins!")
-        break
-    while score2>=100:
-        print("P2 wins!")
-        break
-    while score3>=100:
-        print("P3 wins!")
-        break
-    while score4>=100:
-        print("P4 wins!")
-        break
+
     while score<100 and score2<100 and score3<100 and score4<100:
         roll=input("P1,Enter r to roll dice")
         n=0
@@ -263,3 +252,15 @@ elif no==4:
                 print("P2 score=", score2)
                 print("P3 score=", score3)
                 print("P4 score=", score4)
+    while score>=100:
+        print("P1 wins!")
+        break
+    while score2>=100:
+        print("P2 wins!")
+        break
+    while score3>=100:
+        print("P3 wins!")
+        break
+    while score4>=100:
+        print("P4 wins!")
+        break
