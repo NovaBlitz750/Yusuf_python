@@ -5,7 +5,7 @@ def sub(a,b):
 def mul(a,b):
     return a*b
 def div(a,b):
-    return a%b
+    return a/b
 try:
     a=float(input("Enter a number"))
     b=float(input("Enter another number"))
