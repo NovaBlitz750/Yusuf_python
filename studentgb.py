@@ -17,7 +17,8 @@ print("Average score of class was",avg)
 print("Highest scorer was Divyansh with a score of", high)
 print("Lowest scorer was Ali with a score of", low)
 search=input("Which student's result would you like to search for?").strip().capitalize()
-if search in stu:
-    print("Marks of", search," is",stu.get(stu.values(i)))
-else:
-    print("Please try again,", search,"was not found in the students list")
+while True:
+    if search in stu:
+        print("Marks of", search,"is",stu.get(search))
+    else:
+        print("Please try again,", search,"was not found in the students list")
