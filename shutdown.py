@@ -1,0 +1,10 @@
+def shutdown():
+    return "Shutting Computer..."
+    return False
+apps=input("Are all of your apps closed?").strip().upper()
+if apps=="Y" or apps=="YES":
+    print(shutdown())
+elif apps=="N" or apps=="NO":
+    print("Close all of your apps then be ready for cumputer shutdown")
+else:
+    print("Sorry")

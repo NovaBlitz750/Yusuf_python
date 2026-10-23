@@ -1,0 +1,1221 @@
+import random
+import time
+import os
+
+# ══════════════════════════════════════════════════════════════
+#   🐉  DRAGON QUEST — ULTIMATE EDITION
+#   25 Floors · 6 Bosses · Elite Enemies · Crafting · Quests
+#   Arena · Titles · World Events · Expanded Classes & Skills
+# ══════════════════════════════════════════════════════════════
+
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def slow_print(text, delay=0.026):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(delay)
+    print()
+
+def divider(char="═", n=52):
+    print(char * n)
+
+def pause(s=1.2):
+    time.sleep(s)
+
+def hp_bar(current, maximum, length=20):
+    filled = int((max(0, current) / maximum) * length)
+    return "█" * filled + "░" * (length - filled)
+
+# ══════════════════════════════════════════════════════════════
+#  STATUS EFFECTS
+# ══════════════════════════════════════════════════════════════
+STATUS = {
+    "poison":    {"emoji": "☠️",  "desc": "Loses HP each turn"},
+    "burn":      {"emoji": "🔥",  "desc": "Loses HP per turn"},
+    "stun":      {"emoji": "⚡",  "desc": "Skips a turn"},
+    "frozen":    {"emoji": "❄️",  "desc": "Cannot act, takes bonus damage"},
+    "bleed":     {"emoji": "🩸",  "desc": "Loses HP, hard to heal"},
+    "cursed":    {"emoji": "💜",  "desc": "Halves damage dealt"},
+    "blessed":   {"emoji": "✨",  "desc": "Heals a little each turn"},
+    "berserk":   {"emoji": "😡",  "desc": "+60% ATK, -30% DEF"},
+    "shielded":  {"emoji": "🛡️", "desc": "Blocks next attack"},
+    "death_mark":{"emoji": "💀",  "desc": "Next attack triples"},
+    "resurrection_ready": {"emoji": "🌟", "desc": "Revive on death"},
+    "weakened":  {"emoji": "📉",  "desc": "-25% ATK"},
+    "regen":     {"emoji": "💚",  "desc": "Heals HP each turn"},
+    "empowered": {"emoji": "💪",  "desc": "+30% ATK for a few turns"},
+    "blind":     {"emoji": "🌫️", "desc": "Miss chance increased"},
+    "marked":    {"emoji": "🎯",  "desc": "Takes 30% more damage"},
+}
+
+# ══════════════════════════════════════════════════════════════
+#  EQUIPMENT
+# ══════════════════════════════════════════════════════════════
+WEAPONS = [
+    {"name": "Rusty Sword",      "atk": 0,  "price": 0,   "desc": "Starting blade"},
+    {"name": "Iron Sword",       "atk": 6,  "price": 18,  "desc": "Reliable steel"},
+    {"name": "Shadow Blade",     "atk": 12, "price": 40,  "desc": "Ignores 3 DEF"},
+    {"name": "Flame Sword",      "atk": 18, "price": 75,  "desc": "Burns on hit 20%"},
+    {"name": "Thunder Blade",    "atk": 24, "price": 110, "desc": "Stuns on hit 15%"},
+    {"name": "Void Saber",       "atk": 32, "price": 160, "desc": "Ignores 8 DEF, bleeds 25%"},
+    {"name": "Dragon Fang",      "atk": 42, "price": 240, "desc": "Legendary. Burns+bleeds 30%"},
+    {"name": "Celestial Blade",  "atk": 55, "price": 350, "desc": "Ultimate weapon, +20% all spell dmg"},
+]
+ARMORS = [
+    {"name": "Cloth Robe",       "def": 0,  "price": 0,   "desc": "Starting armor"},
+    {"name": "Leather Armor",    "def": 5,  "price": 15,  "desc": "Basic protection"},
+    {"name": "Chain Mail",       "def": 10, "price": 38,  "desc": "Solid defense"},
+    {"name": "Shadow Cloak",     "def": 14, "price": 70,  "desc": "+12% dodge"},
+    {"name": "Knight's Plate",   "def": 20, "price": 105, "desc": "Heavy but strong"},
+    {"name": "Void Armor",       "def": 28, "price": 155, "desc": "Reflects 10% damage"},
+    {"name": "Dragon Scale",     "def": 36, "price": 230, "desc": "Near-impenetrable"},
+    {"name": "Celestial Robe",   "def": 45, "price": 340, "desc": "Ultimate armor, +15% MP max"},
+]
+ACCESSORIES = [
+    {"name": "None",             "bonus": {},                     "price": 0,   "desc": "Nothing"},
+    {"name": "Lucky Charm",      "bonus": {"crit": 10},           "price": 22,  "desc": "+10% crit"},
+    {"name": "Mana Ring",        "bonus": {"mp_regen": 4},        "price": 28,  "desc": "+4 MP/turn"},
+    {"name": "Warrior's Band",   "bonus": {"atk": 5},             "price": 32,  "desc": "+5 ATK"},
+    {"name": "Guardian Amulet",  "bonus": {"block": 15},          "price": 38,  "desc": "+15% block"},
+    {"name": "Sage's Pendant",   "bonus": {"spell_power": 20},    "price": 48,  "desc": "+20% spell dmg"},
+    {"name": "Berserker Ring",   "bonus": {"atk": 10, "crit": 8},"price": 70,  "desc": "+10 ATK +8% crit"},
+    {"name": "Phoenix Feather",  "bonus": {"revive": True},       "price": 100, "desc": "Auto-revive once"},
+    {"name": "Dragon Eye",       "bonus": {"all": 12},            "price": 150, "desc": "+12 to all stats"},
+]
+
+# Crafting recipes: (ingredient1, ingredient2) -> result item
+CRAFT_RECIPES = {
+    ("Iron Sword",    "Flame Sword"):    ("void_weapon",  "Void Saber",    "⚔️"),
+    ("Chain Mail",    "Shadow Cloak"):   ("void_armor",   "Void Armor",    "🥋"),
+    ("Lucky Charm",   "Warrior's Band"): ("berserker_acc","Berserker Ring","💍"),
+    ("Sage's Pendant","Mana Ring"):      ("dragon_acc",   "Dragon Eye",    "💍"),
+}
+
+# ══════════════════════════════════════════════════════════════
+#  CLASS SKILLS
+# ══════════════════════════════════════════════════════════════
+ALL_SKILLS = {
+    "Warrior": [
+        {"name":"Shield Bash",    "mp":8,  "desc":"Dmg + stun 40%",         "unlocked_at":1},
+        {"name":"Whirlwind",      "mp":14, "desc":"2-4 quick hits",          "unlocked_at":3},
+        {"name":"Berserk Mode",   "mp":20, "desc":"+60% ATK, 3 turns",       "unlocked_at":5},
+        {"name":"War Cry",        "mp":16, "desc":"Weaken enemy -25% ATK",   "unlocked_at":7},
+        {"name":"Earthquake",     "mp":28, "desc":"Massive single blow",     "unlocked_at":9},
+        {"name":"Titan Smash",    "mp":35, "desc":"2x ATK, ignores all DEF", "unlocked_at":12},
+        {"name":"Unbreakable",    "mp":25, "desc":"Block all dmg next turn", "unlocked_at":15},
+        {"name":"Ragnarok",       "mp":50, "desc":"Triple ATK, self-bleed",  "unlocked_at":19},
+    ],
+    "Mage": [
+        {"name":"Fireball",       "mp":10, "desc":"Burns 25%",               "unlocked_at":1},
+        {"name":"Blizzard",       "mp":14, "desc":"Freezes 30%",             "unlocked_at":3},
+        {"name":"Thunder",        "mp":18, "desc":"Stuns 35%",               "unlocked_at":5},
+        {"name":"Arcane Bolt",    "mp":12, "desc":"Pure magic, ignores DEF", "unlocked_at":7},
+        {"name":"Meteor Strike",  "mp":30, "desc":"Devastating blow",        "unlocked_at":9},
+        {"name":"Blizzard Storm", "mp":40, "desc":"Freeze + massive dmg",    "unlocked_at":12},
+        {"name":"Mana Surge",     "mp":0,  "desc":"Sacrifice 20 HP for MP",  "unlocked_at":15},
+        {"name":"Armageddon",     "mp":60, "desc":"The ultimate spell",      "unlocked_at":19},
+    ],
+    "Rogue": [
+        {"name":"Shadowstep",     "mp":8,  "desc":"Bypass all defense",      "unlocked_at":1},
+        {"name":"Poison Blade",   "mp":12, "desc":"Poison enemy 4 turns",    "unlocked_at":3},
+        {"name":"Smoke Bomb",     "mp":10, "desc":"Bleed + escape",          "unlocked_at":5},
+        {"name":"Mark Target",    "mp":8,  "desc":"+30% dmg taken by enemy", "unlocked_at":7},
+        {"name":"Death Mark",     "mp":25, "desc":"Next attack x3",          "unlocked_at":9},
+        {"name":"Shadow Clone",   "mp":30, "desc":"Attack twice this turn",  "unlocked_at":12},
+        {"name":"Vanish",         "mp":20, "desc":"Skip enemy turn",         "unlocked_at":15},
+        {"name":"Assassination",  "mp":45, "desc":"Deal 60% of enemy max HP","unlocked_at":19},
+    ],
+    "Paladin": [
+        {"name":"Holy Strike",    "mp":10, "desc":"Dmg + self-heal",         "unlocked_at":1},
+        {"name":"Divine Shield",  "mp":12, "desc":"Block next attack",       "unlocked_at":3},
+        {"name":"Smite",          "mp":20, "desc":"Dmg + curse enemy",       "unlocked_at":5},
+        {"name":"Consecrate",     "mp":15, "desc":"Blessed regen 4 turns",   "unlocked_at":7},
+        {"name":"Resurrection",   "mp":40, "desc":"Revive on death",         "unlocked_at":9},
+        {"name":"Holy Nova",      "mp":35, "desc":"Dmg + heal + cleanse",    "unlocked_at":12},
+        {"name":"Sacred Flame",   "mp":28, "desc":"Burns + blinds enemy",    "unlocked_at":15},
+        {"name":"Divine Judgment","mp":55, "desc":"Massive holy dmg + regen","unlocked_at":19},
+    ],
+}
+
+# ══════════════════════════════════════════════════════════════
+#  HERO
+# ══════════════════════════════════════════════════════════════
+class Hero:
+    def __init__(self, name, cls):
+        self.name     = name
+        self.cls      = cls
+        self.level    = 1
+        self.xp       = 0
+        self.xp_next  = 40
+        self.gold     = 20
+        self.potions  = 3
+        self.elixirs  = 0
+        self.statuses = {}
+        self.kills    = 0
+        self.floors_cleared = 0
+        self.quests_done    = 0
+        self.arena_wins     = 0
+        self.crafts_made    = 0
+        self.total_dmg      = 0
+        self.revive_used    = False
+
+        self.weapon    = WEAPONS[0].copy()
+        self.armor     = ARMORS[0].copy()
+        self.accessory = ACCESSORIES[0].copy()
+
+        base = {
+            "Warrior": {"hp":140,"atk":17,"def":11,"mp":28,"sp":1.0},
+            "Mage":    {"hp":78, "atk":10,"def":4, "mp":80,"sp":1.5},
+            "Rogue":   {"hp":105,"atk":21,"def":7, "mp":40,"sp":1.1},
+            "Paladin": {"hp":120,"atk":14,"def":13,"mp":45,"sp":1.25},
+        }[cls]
+
+        self.max_hp   = base["hp"]
+        self.hp       = base["hp"]
+        self.base_atk = base["atk"]
+        self.base_def = base["def"]
+        self.mp       = base["mp"]
+        self.max_mp   = base["mp"]
+        self.sp_power = base["sp"]
+
+        self.skills = [s.copy() for s in ALL_SKILLS[cls] if s["unlocked_at"] <= 1]
+
+    @property
+    def atk(self):
+        a = self.base_atk + self.weapon["atk"] + self.accessory["bonus"].get("atk",0) + self.accessory["bonus"].get("all",0)
+        if "berserk"   in self.statuses: a = int(a * 1.6)
+        if "empowered" in self.statuses: a = int(a * 1.3)
+        if "weakened"  in self.statuses: a = int(a * 0.75)
+        return a
+
+    @property
+    def defense(self):
+        d = self.base_def + self.armor["def"] + self.accessory["bonus"].get("all",0)
+        if "berserk" in self.statuses: d = int(d * 0.7)
+        if "frozen"  in self.statuses: d = int(d * 0.55)
+        return d
+
+    def is_alive(self): return self.hp > 0
+
+    def unlock_skills(self):
+        have = {s["name"] for s in self.skills}
+        for s in ALL_SKILLS[self.cls]:
+            if s["unlocked_at"] <= self.level and s["name"] not in have:
+                self.skills.append(s.copy())
+                slow_print(f"  🌟 SKILL UNLOCKED: {s['name']}! — {s['desc']}")
+
+    def apply_status_tick(self):
+        remove = []
+        for st, turns in list(self.statuses.items()):
+            if st == "poison":
+                d = random.randint(5,10); self.hp=max(0,self.hp-d); slow_print(f"  ☠️  Poison: -{d} HP!")
+            elif st == "burn":
+                d = random.randint(4,8);  self.hp=max(0,self.hp-d); slow_print(f"  🔥 Burn: -{d} HP!")
+            elif st == "bleed":
+                d = random.randint(3,6);  self.hp=max(0,self.hp-d); slow_print(f"  🩸 Bleed: -{d} HP!")
+            elif st == "blessed":
+                h = random.randint(6,12); self.hp=min(self.max_hp,self.hp+h); slow_print(f"  ✨ Blessed: +{h} HP!")
+            elif st == "regen":
+                h = random.randint(8,15); self.hp=min(self.max_hp,self.hp+h); slow_print(f"  💚 Regen: +{h} HP!")
+            if st not in ("death_mark","resurrection_ready","shielded","revive_used"):
+                self.statuses[st] = turns - 1
+                if self.statuses[st] <= 0: remove.append(st)
+        for st in remove:
+            del self.statuses[st]; slow_print(f"  ✅ {st.capitalize()} wore off.")
+
+    def add_status(self, st, turns):
+        self.statuses[st] = turns
+        emoji = STATUS.get(st,{}).get("emoji","❓")
+        slow_print(f"  {emoji} {self.name} is now {st}! ({turns} turns)")
+
+    def show_stats(self):
+        st_str = " ".join(STATUS.get(s,{}).get("emoji","?") for s in self.statuses) or "—"
+        bar    = hp_bar(self.hp, self.max_hp)
+        print(f"  🧙 {self.name} [{self.cls}]  Lv.{self.level}  {st_str}")
+        print(f"  ❤️  [{bar}] {self.hp}/{self.max_hp}")
+        print(f"  💎 MP: {self.mp}/{self.max_mp}   ⚔️  ATK:{self.atk}   🛡️ DEF:{self.defense}")
+        print(f"  🗡️  {self.weapon['name']}  🥋 {self.armor['name']}  💍 {self.accessory['name']}")
+        print(f"  ✨ XP:{self.xp}/{self.xp_next}  💰 {self.gold}g  🧪×{self.potions}  💊×{self.elixirs}")
+        if self.skills:
+            sk = ", ".join(s["name"] for s in self.skills)
+            print(f"  🌟 Skills: {sk}")
+
+    def normal_attack(self, enemy):
+        if "blind" in self.statuses and random.random() < 0.35:
+            slow_print(f"  🌫️  You swing blindly and miss!")
+            return 0
+        if self.armor["name"] == "Shadow Cloak" and random.random() < 0.12:
+            slow_print(f"  💨 {enemy.name} attacks — you dodge!"); return 0
+        if self.accessory["bonus"].get("block") and random.random() < self.accessory["bonus"]["block"]/100:
+            slow_print(f"  🛡️  Blocked!"); return 0
+
+        crit  = random.random() < (0.15 + self.accessory["bonus"].get("crit",0)/100 + self.accessory["bonus"].get("all",0)/200)
+        ignore= 3 if "Shadow" in self.weapon["name"] else (8 if "Void" in self.weapon["name"] else 0)
+        dmg   = max(1, self.atk - max(0, enemy.defense - ignore) + random.randint(-3,7))
+        if "marked" in enemy.statuses: dmg = int(dmg * 1.30)
+        if crit: dmg = int(dmg * 2.0); slow_print(f"  💥 CRITICAL! {self.name} deals {dmg} damage!")
+        else:    slow_print(f"  ⚔️  {self.name} attacks for {dmg} damage!")
+
+        # Weapon procs
+        wn = self.weapon["name"]
+        if wn == "Flame Sword"  and random.random()<0.20: enemy.add_status("burn",3)
+        if wn == "Thunder Blade" and random.random()<0.15: enemy.add_status("stun",1)
+        if wn == "Void Saber"   and random.random()<0.25: enemy.add_status("bleed",3)
+        if wn == "Dragon Fang"  and random.random()<0.30:
+            enemy.add_status("burn",3); enemy.add_status("bleed",2)
+        if wn == "Celestial Blade": dmg = int(dmg * 1.10)
+
+        # Void Armor reflect
+        if enemy.armor_name if hasattr(enemy,"armor_name") else False:
+            pass
+        if self.armor["name"] == "Void Armor" and random.random()<0.10:
+            reflect = int(dmg * 0.10)
+            enemy.hp -= reflect
+            slow_print(f"  🔄 Void Armor reflects {reflect} damage!")
+
+        enemy.hp -= dmg
+        self.total_dmg += dmg
+        return dmg
+
+    def use_skill(self, skill, enemy):
+        name = skill["name"]
+        mp   = skill["mp"]
+
+        if name == "Mana Surge":
+            cost_hp = 20
+            gain_mp = min(self.max_mp - self.mp, 30)
+            if self.hp <= cost_hp:
+                slow_print("  ❌ Not enough HP for Mana Surge!"); return False
+            self.hp -= cost_hp; self.mp = min(self.max_mp, self.mp + gain_mp)
+            slow_print(f"  ⚡ Mana Surge! -{cost_hp} HP, +{gain_mp} MP!"); return True
+
+        if self.mp < mp:
+            slow_print(f"  ❌ Need {mp} MP (have {self.mp})."); return False
+        self.mp -= mp
+
+        sp = self.sp_power * (1 + self.accessory["bonus"].get("spell_power",0)/100)
+        if self.weapon["name"] == "Celestial Blade": sp *= 1.20
+
+        def deal(dmg):
+            if "marked" in enemy.statuses: dmg = int(dmg * 1.30)
+            enemy.hp -= dmg
+            self.total_dmg += dmg
+            return dmg
+
+        if name == "Shield Bash":
+            d = deal(int(self.atk*1.3 + random.randint(10,18)))
+            slow_print(f"  🛡️  Shield Bash! {d} damage!")
+            if random.random()<0.40: enemy.add_status("stun",1)
+
+        elif name == "Whirlwind":
+            hits=random.randint(2,4); total=sum(max(1,int(self.atk*0.6+random.randint(4,9))) for _ in range(hits))
+            deal(total); slow_print(f"  🌀 Whirlwind! {hits} hits, {total} total!")
+
+        elif name == "Berserk Mode":
+            self.statuses["berserk"] = 3; slow_print(f"  😡 BERSERK MODE! +60% ATK for 3 turns!")
+
+        elif name == "War Cry":
+            enemy.add_status("weakened",3); slow_print(f"  📢 WAR CRY! Enemy weakened for 3 turns!")
+
+        elif name == "Earthquake":
+            d=deal(int((self.atk*2.8+random.randint(25,40))*sp))
+            slow_print(f"  🌍 EARTHQUAKE! {d} damage!")
+
+        elif name == "Titan Smash":
+            saved_def=enemy.defense; enemy.defense=0
+            d=deal(self.atk*2+random.randint(20,35)); enemy.defense=saved_def
+            slow_print(f"  🔨 TITAN SMASH! {d} damage, ignoring all defense!")
+
+        elif name == "Unbreakable":
+            self.statuses["shielded"]=2; slow_print(f"  🛡️  UNBREAKABLE! Blocking attacks for 2 turns!")
+
+        elif name == "Ragnarok":
+            d=deal(int(self.atk*3+random.randint(30,50)))
+            self.add_status("bleed",3)
+            slow_print(f"  ⚡ RAGNAROK! {d} devastating damage! (you bleed)")
+
+        elif name == "Fireball":
+            d=deal(int((45+random.randint(-8,14))*sp))
+            slow_print(f"  🔥 Fireball! {d} damage!")
+            if random.random()<0.25: enemy.add_status("burn",3)
+
+        elif name == "Blizzard":
+            d=deal(int((42+random.randint(-6,12))*sp))
+            slow_print(f"  ❄️  Blizzard! {d} damage!")
+            if random.random()<0.30: enemy.add_status("frozen",2)
+
+        elif name == "Thunder":
+            d=deal(int((50+random.randint(-8,15))*sp))
+            slow_print(f"  ⚡ Thunder! {d} damage!")
+            if random.random()<0.35: enemy.add_status("stun",1)
+
+        elif name == "Arcane Bolt":
+            d = self.base_atk*2 + int(30*sp) + random.randint(10,20)
+            deal(d); slow_print(f"  🔮 Arcane Bolt! {d} pure magic damage, ignores DEF!")
+
+        elif name == "Meteor Strike":
+            d=deal(int((100+random.randint(-12,22))*sp))
+            slow_print(f"  ☄️  METEOR STRIKE! {d} damage!")
+
+        elif name == "Blizzard Storm":
+            d=deal(int((130+random.randint(-15,25))*sp))
+            slow_print(f"  🌨️  BLIZZARD STORM! {d} damage!")
+            enemy.add_status("frozen",3)
+
+        elif name == "Armageddon":
+            d=deal(int((200+random.randint(-20,40))*sp))
+            slow_print(f"  💥 ARMAGEDDON! {d} catastrophic damage!")
+
+        elif name == "Shadowstep":
+            d = self.atk*2 + random.randint(15,25)
+            deal(d); slow_print(f"  🌑 Shadowstep! {d} damage, bypasses defense!")
+
+        elif name == "Poison Blade":
+            d = max(1, self.atk-enemy.defense+random.randint(6,12))
+            deal(d); slow_print(f"  🗡️  Poison Blade! {d} damage + poison!")
+            enemy.add_status("poison",5)
+
+        elif name == "Smoke Bomb":
+            enemy.add_status("bleed",3); slow_print(f"  💨 Smoke Bomb! Enemy bleeds for 3 turns!")
+            return "escape"
+
+        elif name == "Mark Target":
+            enemy.add_status("marked",4); slow_print(f"  🎯 Marked! Enemy takes +30% damage for 4 turns!")
+
+        elif name == "Death Mark":
+            self.statuses["death_mark"]=1; slow_print(f"  💀 DEATH MARK! Next attack deals triple damage!")
+
+        elif name == "Shadow Clone":
+            d1 = max(1,self.atk-enemy.defense+random.randint(-2,5))
+            d2 = max(1,self.atk-enemy.defense+random.randint(-2,5))
+            deal(d1+d2); slow_print(f"  👥 Shadow Clone! Two strikes: {d1} + {d2} = {d1+d2} total!")
+
+        elif name == "Vanish":
+            self.statuses["shielded"]=1; slow_print(f"  🌫️  Vanish! You disappear — enemy skips their turn!")
+
+        elif name == "Assassination":
+            d = int(enemy.max_hp * 0.60); deal(d)
+            slow_print(f"  🗡️  ASSASSINATION! Deal 60% of enemy max HP: {d} damage!")
+
+        elif name == "Holy Strike":
+            d=deal(int((self.atk*1.5+random.randint(12,20))*sp))
+            h=random.randint(10,20); self.hp=min(self.max_hp,self.hp+h)
+            slow_print(f"  ✝️  Holy Strike! {d} damage, healed {h} HP!")
+
+        elif name == "Divine Shield":
+            self.statuses["shielded"]=1; slow_print(f"  🛡️  Divine Shield! Next attack blocked!")
+
+        elif name == "Smite":
+            d=deal(int((55+random.randint(-10,16))*sp))
+            slow_print(f"  ⚡ Smite! {d} damage!")
+            enemy.add_status("cursed",3)
+
+        elif name == "Consecrate":
+            self.add_status("regen",4); self.add_status("blessed",4)
+            slow_print(f"  🌿 Consecrate! Regen + Blessed for 4 turns!")
+
+        elif name == "Resurrection":
+            self.statuses["resurrection_ready"]=99
+            slow_print(f"  🌟 Resurrection charged! You will rise if you fall!")
+
+        elif name == "Holy Nova":
+            d=deal(int((80+random.randint(-10,20))*sp))
+            h=random.randint(15,28); self.hp=min(self.max_hp,self.hp+h)
+            self.statuses={k:v for k,v in self.statuses.items()
+                           if k not in ("poison","burn","bleed","cursed","frozen","stun","blind")}
+            slow_print(f"  💫 Holy Nova! {d} damage, +{h} HP, all debuffs cleansed!")
+
+        elif name == "Sacred Flame":
+            d=deal(int((65+random.randint(-8,18))*sp))
+            slow_print(f"  🔥 Sacred Flame! {d} damage!")
+            enemy.add_status("burn",4); enemy.add_status("blind",3)
+
+        elif name == "Divine Judgment":
+            d=deal(int((150+random.randint(-15,30))*sp))
+            h=random.randint(20,35); self.hp=min(self.max_hp,self.hp+h)
+            self.add_status("regen",5)
+            slow_print(f"  ⚡ DIVINE JUDGMENT! {d} holy damage! Healed {h} HP! Regen activated!")
+
+        return True
+
+    def use_potion(self):
+        if self.potions<=0: slow_print("  ❌ No potions!"); return
+        h=random.randint(30,50); self.hp=min(self.max_hp,self.hp+h)
+        self.potions-=1; slow_print(f"  🧪 Potion! +{h} HP ({self.potions} left)")
+
+    def use_elixir(self):
+        if self.elixirs<=0: slow_print("  ❌ No elixirs!"); return
+        self.hp=self.max_hp; self.mp=self.max_mp
+        self.elixirs-=1; slow_print(f"  💊 Elixir! Fully restored! ({self.elixirs} left)")
+
+    def gain_xp(self, amount):
+        self.xp+=amount; slow_print(f"  ✨ +{amount} XP!")
+        while self.xp>=self.xp_next: self.level_up()
+
+    def level_up(self):
+        self.level+=1; self.xp-=self.xp_next; self.xp_next=int(self.xp_next*1.42)
+        hp=random.randint(14,22); a=random.randint(2,5); d=random.randint(1,3); m=random.randint(7,13)
+        self.max_hp+=hp; self.hp=self.max_hp
+        self.base_atk+=a; self.base_def+=d; self.max_mp+=m; self.mp=self.max_mp
+        divider()
+        slow_print(f"  🎉 LEVEL UP! Now Level {self.level}!")
+        slow_print(f"     +{hp} HP  +{a} ATK  +{d} DEF  +{m} MP")
+        self.unlock_skills(); divider()
+
+    def get_title(self):
+        if self.level>=20 and self.kills>=50: return "Dragon Slayer"
+        if self.kills>=40: return "Monster Hunter"
+        if self.quests_done>=5: return "Hero of the Realm"
+        if self.arena_wins>=3: return "Arena Champion"
+        if self.crafts_made>=3: return "Master Crafter"
+        if self.level>=15: return "Veteran Adventurer"
+        if self.floors_cleared>=15: return "Dungeon Crawler"
+        return "Adventurer"
+
+
+# ══════════════════════════════════════════════════════════════
+#  ENEMY
+# ══════════════════════════════════════════════════════════════
+class Enemy:
+    def __init__(self, name, hp, atk, defense, xp, gold, emoji,
+                 skills=None, weakness=None, boss=False, elite=False):
+        self.name     = name
+        self.hp       = hp
+        self.max_hp   = hp
+        self.atk      = atk
+        self.defense  = defense
+        self.xp       = xp
+        self.gold     = gold
+        self.emoji    = emoji
+        self.skills   = skills or []
+        self.weakness = weakness
+        self.boss     = boss
+        self.elite    = elite
+        self.statuses = {}
+
+    def is_alive(self): return self.hp > 0
+
+    def add_status(self, st, turns):
+        self.statuses[st]=turns
+        emoji=STATUS.get(st,{}).get("emoji","❓")
+        slow_print(f"  {emoji} {self.name} is now {st}!")
+
+    def apply_status_tick(self):
+        rm=[]
+        for st, turns in list(self.statuses.items()):
+            if st in ("poison","burn","bleed"):
+                d=random.randint(6,12); self.hp=max(0,self.hp-d)
+                slow_print(f"  {STATUS.get(st,{}).get('emoji','💥')} {self.name} takes {d} from {st}!")
+            self.statuses[st]=turns-1
+            if self.statuses[st]<=0: rm.append(st)
+        for st in rm: del self.statuses[st]
+
+    def attack(self, hero):
+        if "stun" in self.statuses or "frozen" in self.statuses:
+            slow_print(f"  {self.name} is immobilised!"); return 0
+        if "shielded" in hero.statuses:
+            slow_print(f"  🛡️  Shield blocks the attack!"); del hero.statuses["shielded"]; return 0
+        if random.random()<0.08:
+            slow_print(f"  💨 {self.name} missed!"); return 0
+        if (self.boss or self.elite) and self.skills and random.random()<0.38:
+            return self._special(hero)
+        dmg=max(1, self.atk-hero.defense+random.randint(-3,6))
+        if "cursed" in self.statuses: dmg=max(1,dmg//2)
+        slow_print(f"  {self.emoji} {self.name} attacks for {dmg} damage!")
+        hero.hp-=dmg; return dmg
+
+    def _special(self, hero):
+        skill=random.choice(self.skills)
+        slow_print(f"  {self.emoji} {self.name} uses {skill['name']}!")
+        pause(0.4)
+        dmg=skill.get("dmg",0)
+        if dmg:
+            actual=max(1,dmg-hero.defense//2+random.randint(-5,10))
+            hero.hp-=actual; slow_print(f"  💥 {actual} damage!")
+        if "status" in skill:
+            hero.add_status(skill["status"],skill.get("turns",2))
+        return dmg
+
+    def hp_bar_str(self):
+        bar=hp_bar(self.hp,self.max_hp,22)
+        tag=" ⭐ELITE" if self.elite else (" 💀BOSS" if self.boss else "")
+        st_str=" ".join(STATUS.get(s,{}).get("emoji","?") for s in self.statuses) if self.statuses else ""
+        print(f"  {self.emoji}{tag} {self.name}")
+        print(f"  [{bar}] {max(0,self.hp)}/{self.max_hp} HP  {st_str}")
+        if self.weakness: print(f"  🔍 Weak to: {self.weakness}")
+
+
+# ══════════════════════════════════════════════════════════════
+#  ENEMY POOLS
+# ══════════════════════════════════════════════════════════════
+def make_normal_enemies():
+    return [
+        Enemy("Slime",         38,  6,  1, 10,  3,  "🟢"),
+        Enemy("Goblin",        52,  9,  2, 16,  5,  "👺"),
+        Enemy("Skeleton",      62, 13,  3, 22,  8,  "💀", weakness="fire"),
+        Enemy("Orc Warrior",   82, 16,  6, 30, 11,  "🐗"),
+        Enemy("Witch",         68, 20,  2, 35, 13,  "🧙‍♀️"),
+        Enemy("Vampire",       88, 22,  5, 42, 16,  "🧛"),
+        Enemy("Golem",        115, 18, 14, 48, 18,  "🗿", weakness="thunder"),
+        Enemy("Dark Knight",   98, 25,  8, 55, 20,  "🖤"),
+        Enemy("Werewolf",      92, 28,  7, 52, 19,  "🐺"),
+        Enemy("Shadow Mage",   78, 30,  3, 60, 22,  "🌑"),
+        Enemy("Lich",         108, 27,  6, 65, 25,  "☠️", weakness="holy"),
+        Enemy("Demon",        125, 32, 10, 72, 28,  "😈"),
+        Enemy("Chimera",      135, 34, 12, 78, 30,  "🦁"),
+        Enemy("Death Knight", 145, 36, 14, 85, 33,  "💀🗡️"),
+        Enemy("Wyvern",       130, 38,  9, 80, 31,  "🐉"),
+        Enemy("Necromancer",  112, 34,  5, 88, 35,  "🧟"),
+        Enemy("Abyssal Fiend",160, 40, 12, 95, 38,  "👿"),
+        Enemy("Infernal Drake",175,42, 15,100, 42,  "🔥🐲"),
+        Enemy("Void Wraith",  140, 45,  8,105, 40,  "🌀"),
+        Enemy("Ancient Golem",200, 35, 22,110, 45,  "🗿⭐", weakness="thunder"),
+    ]
+
+def make_elites(floor):
+    base=make_normal_enemies()
+    e=random.choice(base[min(floor,len(base)-1)-1:min(floor+3,len(base))])
+    return Enemy(
+        "Elite "+e.name, int(e.hp*1.8), int(e.atk*1.4), int(e.defense*1.3),
+        int(e.xp*2.2), int(e.gold*2), e.emoji, elite=True,
+        skills=[
+            {"name":"Power Strike","dmg":int(e.atk*1.8)},
+            {"name":"Vicious Blow","dmg":int(e.atk*2.2),"status":"bleed","turns":3},
+        ]
+    )
+
+def make_bosses():
+    return {
+        4:  Enemy("Iron Colossus",   220, 24,  10,  90,  45, "🤖", boss=True,
+                  skills=[{"name":"Steel Punch","dmg":30},
+                          {"name":"Tremor","dmg":20,"status":"stun","turns":1},
+                          {"name":"Iron Slam","dmg":38}]),
+        8:  Enemy("Shadow Drake",    320, 30,  14, 130,  65, "🐍", boss=True,
+                  skills=[{"name":"Poison Breath","dmg":22,"status":"poison","turns":5},
+                          {"name":"Tail Whip","dmg":35},
+                          {"name":"Shadow Bite","dmg":45}]),
+        12: Enemy("Vampire Lord",    420, 38,  16, 175,  90, "🧛‍♂️", boss=True,
+                  skills=[{"name":"Blood Drain","dmg":40},
+                          {"name":"Curse","dmg":18,"status":"cursed","turns":4},
+                          {"name":"Bat Storm","dmg":32,"status":"bleed","turns":4},
+                          {"name":"Nightmare","dmg":50}]),
+        17: Enemy("Abyssal Titan",   580, 48,  20, 230, 120, "👿", boss=True,
+                  skills=[{"name":"Void Crush","dmg":58},
+                          {"name":"Soul Drain","dmg":35,"status":"weakened","turns":3},
+                          {"name":"Dark Nova","dmg":52,"status":"cursed","turns":3},
+                          {"name":"Abyss Slam","dmg":70}]),
+        22: Enemy("Death God",       750, 55,  24, 300, 160, "💀👑", boss=True,
+                  skills=[{"name":"Death Touch","dmg":65,"status":"bleed","turns":5},
+                          {"name":"Soul Shatter","dmg":75},
+                          {"name":"Eternal Curse","dmg":40,"status":"cursed","turns":5},
+                          {"name":"Reaper's Blow","dmg":85}]),
+        25: Enemy("Dragon Lord",     999, 65,  28, 420, 250, "🐲", boss=True,
+                  skills=[{"name":"Dragon Breath","dmg":70,"status":"burn","turns":5},
+                          {"name":"Tail Crush","dmg":60},
+                          {"name":"Fear Roar","dmg":25,"status":"cursed","turns":3},
+                          {"name":"Inferno Nova","dmg":88,"status":"blind","turns":3},
+                          {"name":"Ancient Fury","dmg":100}]),
+    }
+
+def get_enemy(floor):
+    pool=make_normal_enemies()
+    if floor<=3:   return random.choice(pool[:3])
+    elif floor<=7:  return random.choice(pool[2:7])
+    elif floor<=11: return random.choice(pool[5:11])
+    elif floor<=16: return random.choice(pool[9:15])
+    elif floor<=21: return random.choice(pool[13:18])
+    else:           return random.choice(pool[16:])
+
+
+# ══════════════════════════════════════════════════════════════
+#  QUESTS
+# ══════════════════════════════════════════════════════════════
+QUEST_POOL = [
+    {"name":"First Blood",      "desc":"Win a battle",              "type":"kills",   "goal":1,  "gold":15, "xp":20},
+    {"name":"Monster Slayer",   "desc":"Defeat 3 enemies",          "type":"kills",   "goal":3,  "gold":30, "xp":40},
+    {"name":"Warlord",          "desc":"Defeat 8 enemies",          "type":"kills",   "goal":8,  "gold":60, "xp":80},
+    {"name":"Floor Clearer",    "desc":"Reach floor 5",             "type":"floors",  "goal":5,  "gold":40, "xp":50},
+    {"name":"Dungeon Diver",    "desc":"Reach floor 10",            "type":"floors",  "goal":10, "gold":70, "xp":100},
+    {"name":"Halfway There",    "desc":"Reach floor 13",            "type":"floors",  "goal":13, "gold":90, "xp":130},
+    {"name":"Survivor",         "desc":"Stay above 20 HP",          "type":"survive", "goal":1,  "gold":25, "xp":30},
+    {"name":"Spellcaster",      "desc":"Use a skill 5 times",       "type":"skills",  "goal":5,  "gold":35, "xp":45},
+    {"name":"Loot Goblin",      "desc":"Collect 100 gold total",    "type":"gold",    "goal":100,"gold":50, "xp":60},
+    {"name":"Alchemist",        "desc":"Use 3 potions",             "type":"potions", "goal":3,  "gold":20, "xp":25},
+]
+
+class QuestBoard:
+    def __init__(self):
+        self.active = []
+        self.skill_uses   = 0
+        self.potion_uses  = 0
+        self.total_gold   = 0
+
+    def offer_quests(self, hero):
+        clear(); divider()
+        slow_print("  📋 QUEST BOARD")
+        divider()
+        available=[q for q in QUEST_POOL if q not in self.active and len(self.active)<3]
+        if not available:
+            slow_print("  No new quests available."); pause(1); return
+        offer=random.sample(available, min(3, len(available)))
+        for i,q in enumerate(offer,1):
+            print(f"  [{i}] {q['name']:<20} {q['desc']}")
+            print(f"       Reward: {q['gold']}g + {q['xp']} XP")
+        print("  [0] Leave")
+        divider()
+        c=input("  Accept quest (1-3) or 0: ").strip()
+        if c in ["1","2","3"]:
+            idx=int(c)-1
+            if idx<len(offer):
+                q=offer[idx]; self.active.append(q)
+                slow_print(f"  ✅ Quest accepted: {q['name']}!")
+        pause(0.8)
+
+    def check_quests(self, hero, quest_board):
+        done=[]
+        for q in self.active:
+            completed=False
+            if q["type"]=="kills"   and hero.kills>=q["goal"]:      completed=True
+            if q["type"]=="floors"  and hero.floors_cleared>=q["goal"]: completed=True
+            if q["type"]=="survive" and hero.hp>20:                  completed=True
+            if q["type"]=="skills"  and quest_board.skill_uses>=q["goal"]: completed=True
+            if q["type"]=="gold"    and quest_board.total_gold>=q["goal"]: completed=True
+            if q["type"]=="potions" and quest_board.potion_uses>=q["goal"]: completed=True
+            if completed: done.append(q)
+        for q in done:
+            self.active.remove(q)
+            hero.gold+=q["gold"]; hero.gain_xp(q["xp"])
+            hero.quests_done+=1
+            slow_print(f"  🏆 QUEST COMPLETE: {q['name']}! +{q['gold']}g +{q['xp']} XP!")
+            divider(); pause(0.8)
+
+
+# ══════════════════════════════════════════════════════════════
+#  ARENA
+# ══════════════════════════════════════════════════════════════
+def visit_arena(hero, floor, qb):
+    clear(); divider()
+    slow_print("  ⚔️  THE ARENA — Fight 3 waves for big rewards!")
+    slow_print("  Warning: No healing between waves!")
+    divider()
+    print("  [1] Enter the Arena")
+    print("  [2] Leave")
+    divider()
+    if input("  > ").strip() != "1": return
+
+    pool=make_normal_enemies()
+    waves=[
+        get_enemy(floor),
+        make_elites(floor),
+        get_enemy(min(floor+3,len(pool)-1)),
+    ]
+    hp_before=hero.hp
+
+    for i,enemy in enumerate(waves,1):
+        clear(); slow_print(f"  ⚔️  ARENA WAVE {i}/3: {enemy.emoji} {enemy.name}!")
+        enemy.hp=int(enemy.max_hp*0.8)  # slightly easier in arena
+        result=battle(hero, enemy, qb, arena=True)
+        if result=="lose":
+            slow_print("  💀 Eliminated from the Arena!"); pause(1.5); return
+        if i<3:
+            slow_print("  ✅ Wave cleared! Brief moment to breathe...")
+            heal=random.randint(15,25); hero.hp=min(hero.max_hp,hero.hp+heal)
+            slow_print(f"  🩹 Recovered {heal} HP."); pause(1)
+
+    # Won all 3!
+    divider(); slow_print("  🏆 ARENA CHAMPION! All 3 waves defeated!")
+    gold_prize=80+floor*5; xp_prize=100+floor*8
+    hero.gold+=gold_prize; hero.gain_xp(xp_prize)
+    hero.elixirs+=1; hero.arena_wins+=1
+    slow_print(f"  💰 Prize: {gold_prize} gold + {xp_prize} XP + 1 Elixir!")
+    divider(); pause(2)
+
+
+# ══════════════════════════════════════════════════════════════
+#  CRAFTING
+# ══════════════════════════════════════════════════════════════
+def visit_forge(hero):
+    clear(); divider()
+    slow_print("  🔨 THE FORGE — Combine items to craft powerful gear!")
+    divider()
+    print("  Known recipes:")
+    for (i1,i2),(key,result,emoji) in CRAFT_RECIPES.items():
+        print(f"  {emoji} {i1} + {i2} → {result}")
+    divider()
+    print(f"  Your weapon   : {hero.weapon['name']}")
+    print(f"  Your armor    : {hero.armor['name']}")
+    print(f"  Your accessory: {hero.accessory['name']}")
+    divider()
+    slow_print("  Try to craft? Checks if your gear matches a recipe.")
+    print("  [1] Attempt crafting   [2] Leave")
+    if input("  > ").strip()!="1": return
+
+    items_held=[hero.weapon["name"], hero.armor["name"], hero.accessory["name"]]
+    crafted=False
+    for (i1,i2),(key,result,emoji) in CRAFT_RECIPES.items():
+        if i1 in items_held and i2 in items_held:
+            slow_print(f"  ✅ Recipe found: {i1} + {i2} → {result}!")
+            # Apply upgrade
+            if "weapon" in key:
+                for w in WEAPONS:
+                    if w["name"]==result:
+                        hero.weapon=w.copy(); break
+            elif "armor" in key:
+                for a in ARMORS:
+                    if a["name"]==result:
+                        hero.armor=a.copy(); break
+            elif "acc" in key:
+                for ac in ACCESSORIES:
+                    if ac["name"]==result:
+                        hero.accessory=ac.copy(); break
+            hero.crafts_made+=1
+            slow_print(f"  🔥 Crafted {result}!"); crafted=True; break
+
+    if not crafted:
+        slow_print("  ❌ No matching recipe found with your current gear.")
+    pause(1.5)
+
+
+# ══════════════════════════════════════════════════════════════
+#  TREASURE CHEST
+# ══════════════════════════════════════════════════════════════
+def open_treasure(hero, floor):
+    divider(); slow_print("  📦 TREASURE CHEST!")
+    pause(0.5)
+    r=random.random()
+    if r<0.18:
+        g=random.randint(20,50+floor*2); hero.gold+=g; slow_print(f"  💰 {g} gold!")
+    elif r<0.34:
+        hero.potions+=random.randint(1,2); slow_print("  🧪 Potions found!")
+    elif r<0.46:
+        hero.elixirs+=1; slow_print("  💊 Elixir!")
+    elif r<0.56:
+        g=random.randint(4,8+floor//2); hero.base_atk+=g; slow_print(f"  ⚔️  Power Gem! +{g} ATK!")
+    elif r<0.65:
+        g=random.randint(3,6+floor//3); hero.base_def+=g; slow_print(f"  🛡️  Shield Shard! +{g} DEF!")
+    elif r<0.73:
+        g=random.randint(12,22); hero.max_mp+=g; hero.mp=min(hero.max_mp,hero.mp+g)
+        slow_print(f"  💎 Mana Crystal! +{g} MP!")
+    elif r<0.80:
+        g=random.randint(15,30); hero.max_hp+=g; hero.hp=min(hero.max_hp,hero.hp+g)
+        slow_print(f"  ❤️  Vitality Gem! +{g} max HP!")
+    elif r<0.87:
+        xp_gain=random.randint(20,40); hero.gain_xp(xp_gain)
+        slow_print(f"  ✨ Ancient Tome! +{xp_gain} XP!")
+    elif r<0.95:
+        slow_print("  🎁 RARE DROP: Full Elixir!"); hero.hp=hero.max_hp; hero.mp=hero.max_mp
+    else:
+        slow_print("  💀 MIMIC!"); dmg=random.randint(18,35); hero.hp=max(1,hero.hp-dmg)
+        slow_print(f"  🪤 Took {dmg} damage!")
+    divider(); pause(1.2)
+
+
+# ══════════════════════════════════════════════════════════════
+#  FLOOR EVENTS
+# ══════════════════════════════════════════════════════════════
+def floor_event(hero, floor):
+    r=random.random()
+    if r<0.18:
+        open_treasure(hero, floor)
+    elif r<0.28:
+        clear(); divider(); slow_print("  🛒 Wandering Merchant!")
+        print("  [1] Potion (7g)  [2] Elixir (22g)  [3] Power Dust (+4 ATK, 18g)  [4] Ignore")
+        c=input("  > ").strip()
+        if c=="1" and hero.gold>=7:  hero.gold-=7;  hero.potions+=1; slow_print("  🧪 Bought!")
+        elif c=="2" and hero.gold>=22: hero.gold-=22; hero.elixirs+=1;  slow_print("  💊 Bought!")
+        elif c=="3" and hero.gold>=18: hero.gold-=18; hero.base_atk+=4; slow_print("  ⚔️  +4 ATK!")
+        pause(1.2)
+    elif r<0.38:
+        clear(); divider(); slow_print("  🏛️  Healing Shrine!")
+        h=random.randint(20,40); m=random.randint(10,20)
+        hero.hp=min(hero.max_hp,hero.hp+h); hero.mp=min(hero.max_mp,hero.mp+m)
+        slow_print(f"  ✨ +{h} HP, +{m} MP!"); divider(); pause(1.2)
+    elif r<0.46:
+        clear(); divider(); slow_print("  ⚗️  Mysterious Potion...")
+        roll=random.random()
+        if roll<0.5:
+            hero.add_status("empowered",4); slow_print("  💪 You feel powerful! +30% ATK for 4 turns!")
+        elif roll<0.75:
+            hero.add_status("regen",5); slow_print("  💚 Regen! Healing each turn for 5 turns.")
+        else:
+            hero.add_status("poison",3); slow_print("  ☠️  It was poison!")
+        divider(); pause(1.2)
+    elif r<0.52:
+        clear(); divider(); slow_print("  ⚠️  Trap!")
+        dmg=random.randint(12,28); hero.hp=max(1,hero.hp-dmg)
+        slow_print(f"  💥 Took {dmg} damage!"); divider(); pause(1.2)
+    elif r<0.58:
+        clear(); divider(); slow_print("  📖 Ancient Inscription...")
+        xp=random.randint(25,50); hero.gain_xp(xp)
+        slow_print(f"  📚 Gained {xp} XP from ancient knowledge!"); divider(); pause(1.2)
+    elif r<0.63:
+        clear(); divider(); slow_print("  💰 You find a hidden stash of gold!")
+        g=random.randint(20,45); hero.gold+=g
+        slow_print(f"  💰 Found {g} gold!"); divider(); pause(1.2)
+
+
+# ══════════════════════════════════════════════════════════════
+#  INN
+# ══════════════════════════════════════════════════════════════
+def visit_inn(hero):
+    cost=10+hero.level*2
+    clear(); divider(); slow_print("  🏨 TRAVELER'S INN")
+    divider()
+    print(f"  [1] Rest — Full restore + clear debuffs ({cost}g)")
+    print(f"  [2] Quick Nap — Restore 40% HP ({cost//2}g)")
+    print(f"  [3] Leave")
+    divider(); print(f"  💰 Gold: {hero.gold}"); divider()
+    c=input("  > ").strip()
+    if c=="1":
+        if hero.gold>=cost:
+            hero.gold-=cost; hero.hp=hero.max_hp; hero.mp=hero.max_mp
+            hero.statuses.clear(); slow_print("  😴 Fully rested!")
+        else: slow_print("  ❌ Not enough gold.")
+    elif c=="2":
+        cost2=cost//2
+        if hero.gold>=cost2:
+            hero.gold-=cost2; h=int(hero.max_hp*0.4)
+            hero.hp=min(hero.max_hp,hero.hp+h); slow_print(f"  😪 Quick nap: +{h} HP.")
+        else: slow_print("  ❌ Not enough gold.")
+    pause(1.2)
+
+
+# ══════════════════════════════════════════════════════════════
+#  SHOP
+# ══════════════════════════════════════════════════════════════
+def visit_shop(hero):
+    while True:
+        clear(); divider(); slow_print("  🏪 BLACKSMITH & ITEM SHOP"); divider()
+        print("  ── CONSUMABLES ──")
+        print("  [1] Potion        8g   Restore 30-50 HP")
+        print("  [2] Elixir       28g   Full HP & MP")
+        print("  [3] Antidote      6g   Clear all debuffs")
+        print("  [4] Power Dust   15g   +4 ATK permanently")
+        print("  [5] Iron Plate   15g   +4 DEF permanently")
+        print()
+        print("  ── WEAPONS (better = replaces current) ──")
+        for i,w in enumerate(WEAPONS[1:],6):
+            eq=" ◄" if hero.weapon["name"]==w["name"] else ""
+            print(f"  [{i}] {w['name']:<17} {w['price']}g  +{w['atk']} ATK  {w['desc']}{eq}")
+        print()
+        print("  ── ARMOR ──")
+        for i,a in enumerate(ARMORS[1:],14):
+            eq=" ◄" if hero.armor["name"]==a["name"] else ""
+            print(f"  [{i}] {a['name']:<17} {a['price']}g  +{a['def']} DEF  {a['desc']}{eq}")
+        print()
+        print("  ── ACCESSORIES ──")
+        for i,ac in enumerate(ACCESSORIES[1:],22):
+            eq=" ◄" if hero.accessory["name"]==ac["name"] else ""
+            print(f"  [{i}] {ac['name']:<17} {ac['price']}g  {ac['desc']}{eq}")
+        print()
+        print("  [0] Leave")
+        divider(); print(f"  💰 Gold: {hero.gold}"); divider()
+        c=input("  Choose: ").strip()
+        if c=="0": break
+        try:
+            idx=int(c)
+            if idx==1:
+                if hero.gold>=8: hero.gold-=8;hero.potions+=1;slow_print("  🧪 Bought Potion!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif idx==2:
+                if hero.gold>=28: hero.gold-=28;hero.elixirs+=1;slow_print("  💊 Bought Elixir!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif idx==3:
+                if hero.gold>=6: hero.gold-=6;hero.statuses.clear();slow_print("  🍵 Debuffs cleared!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif idx==4:
+                if hero.gold>=15: hero.gold-=15;hero.base_atk+=4;slow_print("  ⚔️  +4 ATK!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif idx==5:
+                if hero.gold>=15: hero.gold-=15;hero.base_def+=4;slow_print("  🛡️  +4 DEF!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif 6<=idx<=13:
+                w=WEAPONS[idx-5]
+                if hero.gold>=w["price"]:
+                    if hero.weapon["atk"]>=w["atk"]: slow_print("  ⚠️  Already have better weapon.")
+                    else: hero.gold-=w["price"];hero.weapon=w.copy();slow_print(f"  ⚔️  Equipped {w['name']}!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif 14<=idx<=21:
+                a=ARMORS[idx-13]
+                if hero.gold>=a["price"]:
+                    if hero.armor["def"]>=a["def"]: slow_print("  ⚠️  Already have better armor.")
+                    else: hero.gold-=a["price"];hero.armor=a.copy();slow_print(f"  🥋 Equipped {a['name']}!")
+                else: slow_print("  ❌ Not enough gold.")
+            elif 22<=idx<=30:
+                ac=ACCESSORIES[idx-21]
+                if hero.gold>=ac["price"]:
+                    hero.gold-=ac["price"];hero.accessory=ac.copy();slow_print(f"  💍 Equipped {ac['name']}!")
+                else: slow_print("  ❌ Not enough gold.")
+            else: slow_print("  ❓ Invalid.")
+        except ValueError: slow_print("  ❓ Invalid.")
+        pause(0.8)
+
+
+# ══════════════════════════════════════════════════════════════
+#  BATTLE
+# ══════════════════════════════════════════════════════════════
+def battle(hero, enemy, qb=None, arena=False):
+    clear(); divider()
+    if enemy.boss:   slow_print(f"  ⚠️  BOSS: {enemy.emoji} {enemy.name}!"); slow_print("  Prepare yourself!")
+    elif enemy.elite: slow_print(f"  ⭐ ELITE ENEMY: {enemy.emoji} {enemy.name}!")
+    else:             slow_print(f"  ⚔️  {enemy.emoji} {enemy.name} appears!")
+    divider(); pause(0.9)
+
+    turn=0
+    while hero.is_alive() and enemy.is_alive():
+        turn+=1
+        hero.apply_status_tick(); enemy.apply_status_tick()
+        if not hero.is_alive(): break
+
+        # Mana ring regen
+        if hero.accessory["bonus"].get("mp_regen"):
+            hero.mp=min(hero.max_mp, hero.mp+hero.accessory["bonus"]["mp_regen"])
+
+        # Quest check
+        if qb: qb.check_quests(hero, qb)
+
+        clear()
+        print(f"\n  ─── Turn {turn} ───")
+        enemy.hp_bar_str(); print()
+        hero.show_stats(); divider()
+        print("  [1] Attack        [2] Use Skill")
+        print("  [3] Use Potion    [4] Use Elixir")
+        print("  [5] Defend (-40%) [6] Inspect Enemy")
+        if not arena and not enemy.boss:
+            print("  [7] Run Away")
+        divider()
+
+        action=input("  Action: ").strip()
+        defending=False
+
+        if action=="1":
+            if "death_mark" in hero.statuses:
+                base=hero.normal_attack(enemy)
+                bonus=base*2; enemy.hp-=bonus
+                slow_print(f"  💀 DEATH MARK TRIGGERS! +{bonus} bonus damage!")
+                del hero.statuses["death_mark"]
+            else:
+                hero.normal_attack(enemy)
+
+        elif action=="2":
+            if not hero.skills: slow_print("  ❌ No skills!"); continue
+            print()
+            for i,s in enumerate(hero.skills,1):
+                print(f"  [{i}] {s['name']:<17} {s['mp']} MP  {s['desc']}")
+            print("  [0] Cancel")
+            sc=input("  Skill: ").strip()
+            if sc=="0": continue
+            try:
+                skill=hero.skills[int(sc)-1]
+                result=hero.use_skill(skill,enemy)
+                if result=="escape":
+                    slow_print("  💨 Escaped with Smoke Bomb!"); pause(1); return "escaped"
+                if not result: continue
+                if qb: qb.skill_uses+=1
+            except: slow_print("  ❓ Invalid."); continue
+
+        elif action=="3":
+            hero.use_potion()
+            if qb: qb.potion_uses+=1
+
+        elif action=="4":
+            hero.use_elixir()
+
+        elif action=="5":
+            defending=True; slow_print("  🛡️  Defending — incoming damage reduced by 40%.")
+
+        elif action=="6":
+            clear(); divider()
+            slow_print(f"  🔍 Inspecting {enemy.name}...")
+            print(f"  HP: {enemy.hp}/{enemy.max_hp}  ATK: {enemy.atk}  DEF: {enemy.defense}")
+            print(f"  Weakness: {enemy.weakness or 'Unknown'}  Boss: {'Yes' if enemy.boss else 'No'}")
+            if enemy.statuses:
+                print(f"  Statuses: {', '.join(enemy.statuses.keys())}")
+            divider(); input("  Press Enter..."); continue
+
+        elif action=="7" and not arena and not enemy.boss:
+            if random.random()<0.38: slow_print("  🏃 Escaped!"); pause(1); return "escaped"
+            else: slow_print("  ❌ Couldn't escape!")
+        else:
+            slow_print("  ❓ Invalid.")
+
+        # Enemy turn
+        if enemy.is_alive():
+            dmg=enemy.attack(hero)
+            if defending and dmg>0:
+                red=int(dmg*0.40); hero.hp=min(hero.max_hp,hero.hp+red)
+                slow_print(f"  🛡️  Defense saved {red} damage!")
+
+        # Phoenix Feather / Resurrection
+        if not hero.is_alive():
+            if "resurrection_ready" in hero.statuses:
+                del hero.statuses["resurrection_ready"]
+                hero.hp=hero.max_hp//2
+                slow_print("  🌟 RESURRECTION! You rise again!"); pause(1)
+            elif hero.accessory["bonus"].get("revive") and not hero.revive_used:
+                hero.revive_used=True; hero.hp=hero.max_hp//2
+                slow_print("  🪶 Phoenix Feather activates! Revived with half HP!"); pause(1)
+
+        pause(0.45)
+
+    if hero.is_alive():
+        divider(); slow_print(f"  🏆 Victory! {enemy.name} defeated!")
+        hero.kills+=1
+        loot=enemy.gold+random.randint(-4,10); hero.gold+=loot
+        if qb: qb.total_gold+=loot
+        hero.gain_xp(enemy.xp)
+        slow_print(f"  💰 Looted {loot} gold!")
+        if random.random()<0.12: hero.potions+=1; slow_print("  🎁 Rare drop: Potion!")
+        if (enemy.boss or enemy.elite) and random.random()<0.25:
+            hero.elixirs+=1; slow_print("  🎁 Special drop: Elixir!")
+        pause(1.5); return "win"
+    else:
+        divider(); slow_print(f"  💀 {hero.name} has fallen..."); pause(2); return "lose"
+
+
+# ══════════════════════════════════════════════════════════════
+#  MAIN
+# ══════════════════════════════════════════════════════════════
+def main():
+    clear(); divider("═")
+    slow_print("  🐉  DRAGON QUEST — ULTIMATE EDITION  🐉")
+    slow_print("  25 Floors · 6 Bosses · Quests · Arena · Crafting")
+    divider("═"); pause(0.5)
+
+    name=input("\n  Hero name: ").strip() or "Hero"
+    divider()
+    print("\n  Choose your class:\n")
+    print("  [1] Warrior  — Tanky, berserk, titan smash, ragnarok")
+    print("  [2] Mage     — Fragile, devastating spells, armageddon")
+    print("  [3] Rogue    — Poison, assassination, shadow clone")
+    print("  [4] Paladin  — Self-heal, curses, divine judgment")
+    divider()
+    cls={"1":"Warrior","2":"Mage","3":"Rogue","4":"Paladin"}.get(
+        input("  Choice (1-4): ").strip(),"Warrior")
+
+    hero   = Hero(name, cls)
+    bosses = make_bosses()
+    qb     = QuestBoard()
+
+    clear(); divider()
+    slow_print(f"  Welcome, {hero.name} the {cls}!")
+    slow_print("  Conquer 25 floors. Defeat the Dragon Lord!")
+    slow_print("  ⚠️  Bosses at floors 4, 8, 12, 17, 22 and 25!")
+    slow_print("  ⭐ Elite enemies can appear on any floor!")
+    slow_print("  ⚔️  Arena, 📋 Quests, 🔨 Forge available between floors!")
+    divider(); pause(2)
+
+    floor=1; total=25
+
+    while hero.is_alive() and floor<=total:
+
+        # Quest auto-check
+        qb.check_quests(hero, qb)
+
+        # ── BOSS FLOOR ─────────────────────────────
+        if floor in bosses:
+            clear(); divider("═")
+            slow_print(f"  ⚠️  FLOOR {floor} — BOSS BATTLE!")
+            divider("═"); pause(0.8)
+            boss=bosses[floor]; boss.hp=boss.max_hp; boss.statuses={}
+            result=battle(hero, boss, qb)
+            if result=="win":
+                hero.floors_cleared+=1; floor+=1
+            elif result=="lose":
+                break
+            else:
+                slow_print("  ⚠️  Cannot flee from a Boss!"); pause(1)
+            continue
+
+        # ── NORMAL FLOOR ───────────────────────────
+        clear(); divider()
+        slow_print(f"  🏰 FLOOR {floor} / {total}   |   Kills: {hero.kills}   |   Quests: {hero.quests_done}")
+        divider()
+        print("  [1] Explore       (fight + random event)")
+        print("  [2] Elite Battle  (harder fight, better loot)")
+        print("  [3] View Stats")
+        print("  [4] Visit Shop")
+        print("  [5] Rest at Inn")
+        print("  [6] Arena         (3 waves, big prize)")
+        print("  [7] Quest Board")
+        print("  [8] The Forge     (crafting)")
+        print("  [9] Quit")
+        divider()
+
+        c=input("  What do you do? ").strip()
+
+        if c=="1":
+            floor_event(hero, floor)
+            if not hero.is_alive(): break
+            enemy=get_enemy(floor)
+            result=battle(hero, enemy, qb)
+            if result=="win":
+                hero.floors_cleared+=1; floor+=1
+            elif result=="lose": break
+
+        elif c=="2":
+            slow_print("  ⭐ Seeking an Elite enemy...")
+            pause(0.5)
+            elite=make_elites(floor)
+            result=battle(hero, elite, qb)
+            if result=="win":
+                hero.floors_cleared+=1; floor+=1
+            elif result=="lose": break
+
+        elif c=="3":
+            clear(); divider(); hero.show_stats(); divider()
+            input("  Press Enter...")
+
+        elif c=="4":
+            visit_shop(hero)
+
+        elif c=="5":
+            visit_inn(hero)
+
+        elif c=="6":
+            visit_arena(hero, floor, qb)
+
+        elif c=="7":
+            qb.offer_quests(hero)
+            qb.check_quests(hero, qb)
+
+        elif c=="8":
+            visit_forge(hero)
+
+        elif c=="9":
+            slow_print("  👋 Farewell, hero!"); return
+        else:
+            slow_print("  ❓ Invalid choice.")
+
+    # ── END SCREEN ────────────────────────────────
+    clear(); divider("═")
+    if floor>total:
+        slow_print("  🎉🎉  YOU WIN! THE DRAGON LORD IS DEFEATED!  🎉🎉")
+        slow_print(f"  {hero.name} is crowned the greatest hero of all time! 👑")
+    else:
+        slow_print("  💀 GAME OVER")
+        slow_print(f"  {hero.name} fell on Floor {floor}.")
+    divider("═")
+    title=hero.get_title()
+    print(f"\n  🏅 Title         : {title}")
+    print(f"  Class           : {hero.cls}")
+    print(f"  Final Level     : {hero.level}")
+    print(f"  Floors Cleared  : {hero.floors_cleared} / {total}")
+    print(f"  Enemies Slain   : {hero.kills}")
+    print(f"  Quests Completed: {hero.quests_done}")
+    print(f"  Arena Wins      : {hero.arena_wins}")
+    print(f"  Crafts Made     : {hero.crafts_made}")
+    print(f"  Total Damage    : {hero.total_dmg}")
+    print(f"  Gold on hand    : {hero.gold}")
+    print(f"  Weapon          : {hero.weapon['name']}")
+    print(f"  Armor           : {hero.armor['name']}")
+    print(f"  Accessory       : {hero.accessory['name']}")
+    divider("═")
+    slow_print("  Thanks for playing Dragon Quest Ultimate! 🐉\n")
+
+    if input("  Play again? (y/n): ").strip().lower()=="y":
+        main()
+
+if __name__=="__main__":
+    main()

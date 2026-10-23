@@ -1,0 +1,9 @@
+import turtle
+day=input("What is ur name?").strip().capitalize()
+window = turtle.Screen()
+t= turtle.Turtle()
+t.hideturtle()
+t.penup()
+t.goto(0,100)
+t.write(f"Hello {day}", align="center", font=("Arial", 30, "bold"))
+window.exitonclick()
