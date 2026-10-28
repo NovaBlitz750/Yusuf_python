@@ -5,4 +5,4 @@ for n in [10, 100, 1000]:
 
 print(" Your guess:", guess)
 input("Full ladder at n=1000. Press Enter")
-print(" O(1)=1  O(log n)=10 O(n)=1000 O(n^2)=1,000,000")
+print(" O(1)=1  O(log n)=10 O(n)=1000 O(n^2)=1,000,000")P
