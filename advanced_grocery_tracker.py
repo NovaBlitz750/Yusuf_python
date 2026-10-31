@@ -31,4 +31,4 @@ gst_ttl=ttl*1.15
 print("Total: $",ttl )
 print("Rounded off total: $", round(ttl) )
 print("GST = $",gst_ttl)
-print(f"Total with GST: {Fore.RED}${gst_ttl}")
+print(f"Total with GST: {Fore.RED}${gst_ttl}{Fore.RESET}")
