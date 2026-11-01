@@ -28,7 +28,8 @@ elif how=="1":
     for name, price in result.items():
         print(f"{name}: ${price:.2f}")
 gst_ttl=ttl*1.15
+gst=ttl*0.15
 print("Total: $",ttl )
 print("Rounded off total: $", round(ttl) )
-print("GST = $",gst_ttl)
+print("GST = $",gst)
 print(f"Total with GST: {Fore.RED}${gst_ttl}{Fore.RESET}")
