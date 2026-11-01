@@ -116,10 +116,11 @@ def crafting_recipes(crafted_item):
             sp("You have enough materials to craft an axe, would u like to proceed? (y/n)").strip().lower()
             craft_axe=input(" ")
             if craft_axe=="y" or craft_axe=="y":
-                
+                inventory["Branches"]-=2
+                inventory["Stones"]-=2
+                inventory["Vines-=2"]
         else:
-            sp("You don't have enough materials to craft a stone axe")
-
+            sp("You don't have enough materials to craft a stone axe")    
 while True:
     print("-----SURVIVAL ISLAND-----")
     ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes")
@@ -128,6 +129,12 @@ while True:
     elif ask=="1" or ask.strip().capitalize()=="Explore" and entered<1:
         new_explore(new_branches)
         entered+=1
+    elif ask=="1" or ask.strip().capitalize()=="Explore" and entered>1 and entered<5:
+        print("You enter a jungle and pick up stones from the ground and vines dangling from trees")
+        ran_stones=random.randint(1,5)
+        ran_vines=random.randint(1,8)
+        inventory["Stones"] = inventory.get("Stones", 0) + ran_stones
+        inventory["Vines"]=inventory.get("Vines",0)+ran_vines
     elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
         if not inventory:
             sp("Your inventory is empty, start exploring to gather items")
