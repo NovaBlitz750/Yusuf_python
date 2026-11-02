@@ -1,4 +1,3 @@
-
 import random
 import time
 
@@ -52,10 +51,11 @@ def animal_encounter():
 
     encounter = random.randint(1, 100)
 
-    if encounter <= 40:
+    if encounter <= 30:
         current_animal = random.choice(["Wild Boar", "Monkey", "Snake", "Tropical Bird"])
 
         sp(f"You encounter a {current_animal}!")
+
     else:
         sp("You explore the jungle but encounter no animals.")
 def fishing():
@@ -89,11 +89,71 @@ def fishing():
                 inventory[loot] = inventory.get(loot, 0) + 1
             else:
                 sp(f"{loot} discarded successfully")
-    
-
+def boathouse():
+    sp("You enter the boathouse, what next?\n[1] Investigate locked cupboard\n[2] Pick up available items")
+    boathouse_ask=input(" ")
+    if boathouse_ask=="1":
+        global aft_looting_boathouse
+        key_attempts=random.randint(1,10)
+        for i in range(0,key_attempts):
+            sp("You insert the key you found at the shore into the lock, its pretty rusty and old so you try to yank it open")
+            key_attempt=input("Press enter to try opening the cupboard")
+            if i<7:
+                print("Attempt failed, try again")
+        sp("Attempt successful, inside you find a gasoline can, duct tape and engine oil")
+        inventory["Engine Oil"]=1
+        inventory["Duct Tape"]=1
+        inventory["Gasoline Can"]=1
+        sp("You explore the rest of the boathouse and find a map and 20 pieces of bread")
+        inventory["Map"]=1
+        inventory["Bread"]+=20
+        sp("You leave the boathouse, what next?\n[1] Explore Jungle \n[2] Follow map")
+        aft_looting_boathouse=input(" ")
+    elif boathouse_ask==2:
+        sp("You explore the rest of boathouse and find a map and 20 pieces of bread")
+        inventory["Map"]=1
+        inventory["Bread"]+=20
+    else:
+        print("Please enter a valid input")
+def die():
+    sp("You Died!")
+    structure_dice=[1,2,3,4,5,6]
+    current_animal=None
+    health=100
+    current_biome="Beach"
+    hearts=health//20
+    fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle",]
+    unlocked_biomes={"Beach"}
+    choices=[]
+    inventory={}
+    possibilities_for_entering=["1","2","3","4","5","6","7"]
+    entered=0
+    new_branches=random.randint(1,10)
 def pi():
     sp(f"Inventory:{inventory}")
+def beach_explore():
+    sp("You explore further along the beach...")
 
+    beach_dice = random.randint(1, 6)
+
+    if beach_dice == 3 or beach_dice==4:
+        sp("""
+You notice a strange wooden building
+near the shoreline...
+
+ABANDONED BOATHOUSE!
+
+Would you like to enter? (y/n)
+""")
+
+        enter = input(" ").strip().lower()
+
+        if enter == "y" or enter == "yes":
+            boathouse()
+        else:
+            sp("You leave the boathouse and continue exploring...")
+    else:
+        sp("You find some shells and driftwood along the shore.")
 def new_explore(new_branches):
     sp("You notice some fallen branches nearby and pick them up")
     inventory["Branches"] = inventory.get("Branches", 0) + new_branches
@@ -181,7 +241,7 @@ def crafting_recipes():
     3x Branches
     3x Vines
     ----------------------------
-    35 Durability
+    45 Durability
     -2 Durability per arrpw shot
     Use: Hunt animals from a distance.
 
@@ -251,7 +311,7 @@ def crafting_recipes():
             if craft_bow=="y" or craft_bow=="yes":
                 inventory["Branches"]-=3
                 inventory["Vines"]-=3
-                inventory["Bow"]=inventory.get("Bow",0)+35
+                inventory["Bow"]=inventory.get("Bow",0)+45
                 sp("Bow crafted successfully")
             else:
                 sp("Failed to craft Bow")
@@ -290,7 +350,7 @@ def main():
     while True:
         print("Health:",health, "❤️ " * (health // 20))
         print("-----SURVIVAL ISLAND-----")
-        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Travel back to beach ")
+        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Open map ")
         if ask not in possibilities_for_entering:
             sp("Please enter a valid input ?????")
         elif (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
@@ -305,6 +365,7 @@ def main():
             inventory["Vines"] = inventory.get("Vines", 0) + ran_vines
             entered += 1
             current_biome="Jungle"
+            unlocked_biomes.add("Jungle")
         elif (entered > 3 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
             current_biome="Jungle"
             sp("Would you like to: \n[1] Explore deeper into the jungle?\n[2] Explore the beach shore more")
@@ -321,16 +382,45 @@ AN ABANDONED CABIN!
 Would u like to enter? (y/n) """)
                     enter=input(" ").strip().lower()
                     if enter=="y" or enter=="yes":
-                        sp("You find wooden planks, bread, duct tape and a helicopter manual inside!")
+                        sp("You find wooden planks, bread and a helicopter manual inside!")
                         inventory["Planks"]=15
                         inventory["Bread"]=30
-                        inventory["Duct Tape"]=1
+                        
                         inventory["Helicopter Manual"]=1
                     else:
                         sp("You leave the cabin and continue exploring...")
                         pass
                 else:
                     animal_encounter()
+            else:
+                sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
+                Its a Key!""")
+                inventory["Key"]+=1
+                sp("..........")
+                beach_explore()
+                if aft_looting_boathouse =="1":
+                    sp("You follow the map up large hills")
+                    unlocked_biomes.add("Large Hills")
+                    current_biome="Large Hills"
+                    sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it\n[3] Sneak Away")
+                    fight_or_flight=input(" ")
+                    if fight_or_flight=="1":
+                        sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
+                    elif fight_or_flight=="2":
+                        if (inventory["Bow"]>=40 and inventory["Arrow"]>=20):
+                            sp("You bow the arrow from a distance and kill the boar but consume 20 arrows in the process, raw meat obtained")
+                            inventory["Bow"]-=40
+                            inventory["Arrow"]-=20
+                            inventory["Raw Meat"]=random.randint(1,6)
+                        elif inventory["Stone Knife"]>=20:
+                            sp("You rapidly attack the boar with your stone knife and obtain all of its raw meat")
+                            inventory["Stone Knife"]-=20
+                            inventory["Raw Meat"]+=30
+                        elif inventory["Stone Axe"]>=20:
+                            sp("You swing at the boar with your stone axe and obtain raw meat")
+                            inventory["Stone Axe"]-=20
+                            inventory["Raw Meat"]+=random.randint(1,20)
+
 
         elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
             if not inventory:
@@ -351,7 +441,5 @@ Would u like to enter? (y/n) """)
             else:
                 sp("Acquire fishing rod and travel to a beach biome to start fishing")
         elif ask=="7":
-            current_biome="Beach"
-            sp("Traveled back to beach")
-
+            sp(f"{unlocked_biomes}")
 main()
