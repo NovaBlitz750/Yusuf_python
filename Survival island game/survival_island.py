@@ -11,7 +11,7 @@ fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle"]
 unlocked_biomes={"Beach"}
 choices=[]
 inventory={}
-possibilities_for_entering=["1","2","3","4","5"]
+possibilities_for_entering=["1","2","3","4","5","6","7"]
 entered=0
 new_branches=random.randint(1,10)
 
@@ -281,7 +281,7 @@ def main():
     while True:
         print("Health:",health, "❤️ " * (health // 20))
         print("-----SURVIVAL ISLAND-----")
-        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees ")
+        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Travel back to beach")
         if ask not in possibilities_for_entering:
             sp("Please enter a valid input ?????")
         elif (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
@@ -305,7 +305,6 @@ def main():
                 deeper_explore=random.choice(structure_dice)
                 if deeper_explore==3:
                     sp("""You notice something in between the trees
-
 
 You discovered:
 AN ABANDONED CABIN!
@@ -342,6 +341,8 @@ Would u like to enter? (y/n) """)
                 sp("Acquire fishing rod first to start fishing")
             else:
                 sp("Acquire fishing rod and travel to a beach biome to start fishing")
-
+        elif entered=="7":
+            current_biome="Beach"
+            sp("Traveled back to beach")
 
 main()
