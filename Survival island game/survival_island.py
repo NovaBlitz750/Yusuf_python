@@ -5,7 +5,7 @@ import time
 
 health=100
 hearts=health//20
-fishing_loot=["fish","seaweed","crab","lobster"]
+fishing_loot=["fish","seaweed","crab","empty","iron axe"]
 unlocked_location={"Beach"}
 choices=[]
 inventory={}
@@ -218,6 +218,6 @@ while True:
         crafting_recipes()
     elif ask=="5" or ask.strip().capitalize()=="Go Fishing":
         if "Fishing Rod" in inventory:
-            print("hello")
+            print("")
         else:
             sp("Acquire fishing rod first to start fishing")
