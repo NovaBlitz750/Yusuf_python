@@ -402,7 +402,7 @@ Would u like to enter? (y/n) """)
                     sp("You follow the map up large hills")
                     unlocked_biomes.add("Large Hills")
                     current_biome="Large Hills"
-                    sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it\n[3] Sneak Away")
+                    sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it")
                     fight_or_flight=input(" ")
                     if fight_or_flight=="1":
                         sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
@@ -416,10 +416,15 @@ Would u like to enter? (y/n) """)
                             sp("You rapidly attack the boar with your stone knife and obtain all of its raw meat")
                             inventory["Stone Knife"]-=20
                             inventory["Raw Meat"]+=30
+                            health-=25
                         elif inventory["Stone Axe"]>=20:
                             sp("You swing at the boar with your stone axe and obtain raw meat")
                             inventory["Stone Axe"]-=20
                             inventory["Raw Meat"]+=random.randint(1,20)
+                            health-=40
+
+                    sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
+                    
 
 
         elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
