@@ -2,6 +2,10 @@
 import random
 import time
 
+
+health=100
+hearts=health//20
+fishing_loot=["fish","seaweed","crab","lobster"]
 unlocked_location={"Beach"}
 choices=[]
 inventory={}
@@ -112,7 +116,7 @@ def crafting_recipes():
 [5] Arrow
     1x Branch
     1x Stone
-    1x Fine
+    1x Vine
     Gives 3 per craft
 ================================
 """)
@@ -169,8 +173,25 @@ def crafting_recipes():
                 inventory["Bow"]=inventory.get("Bow",0)+35
                 sp("Bow crafted successfully")
             else:
-                sp("Failed to ")
+                sp("Failed to craft Bow")
+        else:
+            sp("You don't have enough materials to craft a bow")
+    elif crafted_item=="5":
+        if inventory.get("Branches",0)>=1 and inventory.get("Stones",0)>=1 and inventory.get("Vines",0)>=1:
+            sp("You have enough materials to craft arrows, woud u like to proceed? (y/n) ")
+            craft_arrows=input(" ").strip().lower()
+            if craft_arrows=="y" or craft_arrows=="yes":
+                inventory.get["Branches"]-=1
+                inventory.get["Stones"]-=1
+                inventory.get["Vines"]-=1
+                inventory["Arrow"]=inventory.get("Arrow",0)+3
+                sp("3 Arrows crafted successfully")
+            else:
+                sp("Failed to craft arrows")
+        else:
+            sp("You don't have enough materials to craft arrows")
 while True:
+    print("Health:",health, "❤️ " * (health // 20))
     print("-----SURVIVAL ISLAND-----")
     ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees ")
     if ask not in possibilities_for_entering:
@@ -195,3 +216,8 @@ while True:
         instructions()
     elif ask=="4" or ask.strip().capitalize()=="View Crafting Recipes":
         crafting_recipes()
+    elif ask=="5" or ask.strip().capitalize()=="Go Fishing":
+        if "Fishing Rod" in inventory:
+            print("hello")
+        else:
+            sp("Acquire fishing rod first to start fishing")
