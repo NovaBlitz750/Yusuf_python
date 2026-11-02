@@ -7,7 +7,7 @@ current_animal=None
 health=100
 current_biome="Beach"
 hearts=health//20
-fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle"]
+fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle",]
 unlocked_biomes={"Beach"}
 choices=[]
 inventory={}
@@ -60,26 +60,35 @@ def animal_encounter():
         sp("You explore the jungle but encounter no animals.")
 def fishing():
     while True:
-        loot=random.choice(fishing_loot)
-        if loot=="empty":
-            sp("attempt failed, nothing found. Try again? (y/n) ")
-            try_again=input(" ")
-            if try_again=="y":
+        loot = random.choice(fishing_loot)
+        fish=input("Press enter to attempt fishing")
+        inventory["Fishing Rod"]-=2
+        if loot == "empty":
+            sp("Attempt failed, nothing found. Try again? (y/n)")
+            try_again = input(" ").strip().lower()
+
+            if try_again == "y":
                 continue
             else:
                 break
-        elif loot=="stone axe":
-            sp(f"Attempt successful!, {loot} found, add to inventory? (y/n) ")
-            add_to_inv=input(" ").strip().lower()
-        if add_to_inv=="y":
-            inventory[loot]= inventory.get(loot,0)+1
+
+        elif loot == "stone axe":
+            sp(f"Attempt successful! {loot} found, add to inventory? (y/n)")
+            add_to_inv = input(" ").strip().lower()
+
+            if add_to_inv == "y":
+                inventory["Stone Axe"] = inventory.get("Stone Axe", 0) + 40
+            else:
+                sp("Stone Axe discarded successfully")
+
         else:
-            sp(f"Attempt successful!, {loot} found, add to inventory? (y/n) ")
-            add_to_inv=input(" ").strip().lower()
-        if add_to_inv=="y":
+            sp(f"Attempt successful! {loot} found, add to inventory? (y/n)")
+            add_to_inv = input(" ").strip().lower()
+
+            if add_to_inv == "y":
                 inventory[loot] = inventory.get(loot, 0) + 1
-        else:
-            sp(f"{loot} discarded successfully")
+            else:
+                sp(f"{loot} discarded successfully")
     
 
 def pi():
@@ -281,7 +290,7 @@ def main():
     while True:
         print("Health:",health, "❤️ " * (health // 20))
         print("-----SURVIVAL ISLAND-----")
-        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Travel back to beach")
+        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Travel back to beach ")
         if ask not in possibilities_for_entering:
             sp("Please enter a valid input ?????")
         elif (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
@@ -341,7 +350,7 @@ Would u like to enter? (y/n) """)
                 sp("Acquire fishing rod first to start fishing")
             else:
                 sp("Acquire fishing rod and travel to a beach biome to start fishing")
-        elif entered=="7":
+        elif ask=="7":
             current_biome="Beach"
             sp("Traveled back to beach")
 
