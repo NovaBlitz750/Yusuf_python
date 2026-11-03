@@ -59,7 +59,7 @@ def update_hunger(amount=5):
         sp("You're weak with hunger... you lose 2 health.")
         health -= 2
     elif hunger <= 25:
-        sp("Your stomach growls... you need to eat soon."))
+        sp("Your stomach growls... you need to eat soon.")
 
 def eat():
     global hunger
@@ -209,7 +209,7 @@ def fishing():
                 inventory[loot] = inventory.get(loot, 0) + 1
             else:
                 sp(f"{loot} discarded successfully")
-        if inventory.get("Fishing Rod",0)<="0":
+        if inventory.get("Fishing Rod",0)<=0:
             sp("Your fishing rod broke! acquire a new one to start fishing again")
             break
 def boathouse():
@@ -645,20 +645,7 @@ Would u like to enter? (y/n) """)
                 sp("Go to Large Hills or a Jungle biome to start hunting")
         elif ask=="9":
             cook()
-        if inventory.get("Stone Axe",0)==0:
-            inventory.pop("Stone Axe",None)
-        if inventory.get("Stone Knife",0)==0:
-            inventory.pop("Stone Knife",None)
-        if inventory.get("Bow",0)==0:
-            inventory.pop("Bow",None)
-        if inventory.get("Branches",0)==0:
-                inventory.pop("Branches",None)
-        if inventory.get("Bread",0)==0:
-            inventory.pop("Bread",None)
-        if inventory.get("Raw Meat",0)==0:
-                inventory.pop("Raw Meat",None)
-        if inventory.get("Stones",0)==0:
-                inventory.pop("Stones",None)
+        clean_inventory()
         if health<=0:
             die()
         
