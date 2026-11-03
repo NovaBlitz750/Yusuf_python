@@ -2,6 +2,7 @@ import random
 import time
 
 hunger=100
+hill_boar_fight=False
 current_biome = "Beach"
 current_animal = None
 hunger = 100
@@ -19,6 +20,10 @@ entered=0
 new_branches=random.randint(1,10)
 COOKABLE = {"Raw Meat": "Cooked Meat", "fish": "Fish", "crab": "Crab"}
 
+
+def clean_inventory():
+    for item in [k for k, v in inventory.items() if v <= 0]:
+        del inventory[item]
 def cook():
     if inventory.get("Campfire", 0) <= 0:
         sp("You need a Campfire to cook! Craft one first.")
@@ -50,8 +55,11 @@ def update_hunger(amount=5):
     if hunger == 0:
         sp("You're starving! You lose 10 health.")
         health -= 10
+    elif hunger <= 10:
+        sp("You're weak with hunger... you lose 2 health.")
+        health -= 2
     elif hunger <= 25:
-        sp("Your stomach growls... you need to eat soon.")
+        sp("Your stomach growls... you need to eat soon."))
 
 def eat():
     global hunger
@@ -223,12 +231,15 @@ def boathouse():
         sp("You explore the rest of the boathouse and find a map and 20 pieces of bread")
         inventory["Map"]=1
         inventory["Bread"]=20
-        sp("You leave the boathouse, what next?\n[1] Explore Jungle \n[2] Follow map")
+        sp("You leave the boathouse, what next?\n[1] Open Map \n[2] Follow map")
         aft_looting_boathouse=input(" ")
+        if aft_looting_boathouse=="1":
+            open_map()
     elif boathouse_ask=="2":
         sp("You explore the rest of boathouse and find a map and 20 pieces of bread")
         inventory["Map"]=1
         inventory["Bread"]+=20
+        
     else:
         print("Please enter a valid input")
 def open_map():
@@ -353,14 +364,23 @@ def crash_site():
         for item in missing:
             sp(f"- {item}")
         return
+    if "Helicopter Manual" not in inventory:
+        sp("You don't know how to control the helicopter, find the manual and read it first")
 
     sp("You have everything you need! Start the repair? (y/n)")
     answer = input(" ").strip().lower()
     if answer == "y" or answer == "yes":
-        sp("You pour in the gasoline, tape up the damage and follow the manual...")
-        sp("The engine roars to life. You lift off and escape the island!")
-        sp("***** YOU WIN *****")
-        exit()
+        sp("Press enter to pour in gasoline.....................")
+        gasoline_pour=input(" ")
+        sp("Tank full!")
+        for i in range(0,random.randint(0,10)):
+            sp("Press enter to fix copter blades")
+            blade_fix=input(" ")
+        sp("You get into the helicopter, they key is already there")
+        for i in range(0,random.randint(0,7)):
+            sp("Press enter to try and start helicopter....")
+            helicopter_start=input("")
+        sp("The Helciopter starts and the engine roars to life, you escape the island and reach a city\n     YOU WIN!")
     else:
         sp("You step back from the helicopter.")
 
@@ -545,7 +565,7 @@ AN ABANDONED CABIN!
 Would u like to enter? (y/n) """)
                     enter=input(" ").strip().lower()
                     if enter=="y" or enter=="yes":
-                        sp("You find wooden planks, bread and a helicopter manual inside!")
+                        sp("You find wooden planks, bread and a helicopter manual inside!\n You read the manual and now can control a helicopter")
                         inventory["Planks"]=15
                         inventory["Bread"]=30
                         
@@ -563,7 +583,7 @@ Would u like to enter? (y/n) """)
                 sp("..........")
                 beach_explore()
                 global aft_looting_boathouse
-                if aft_looting_boathouse =="1":
+                if aft_looting_boathouse =="1" and hill_boar_fight=="False":
                     sp("You follow the map up large hills")
                     unlocked_biomes.add("Large Hills")
                     current_biome="Large Hills"
@@ -590,7 +610,8 @@ Would u like to enter? (y/n) """)
 
                     sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
                     crash_site()
-                
+                elif aft_looting_boathouse=="2" and hill_boar_fight=="True":
+                    crash_site()
 
 
         elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
