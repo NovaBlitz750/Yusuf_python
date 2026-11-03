@@ -528,7 +528,7 @@ def crafting_recipes():
             sp("You don't have enough materials to craft a campfire")
                 
 def main():
-    global entered, current_biome, health, aft_looting_boathouse, hill_boar_fight
+    global entered, current_biome, health, aft_looting_boathouse, hill_boar_fight, hunger
     while True:
         if win==True:
             break
