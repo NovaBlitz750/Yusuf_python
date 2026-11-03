@@ -1,10 +1,13 @@
 import random
 import time
 
+current_biome = "Beach"
+current_animal = None
+hunger = 100
+FOOD_VALUES = {"Bread": 10, "Fish": 15, "Crab": 10, "Cooked Meat": 30, "Raw Meat": 5}
 structure_dice=[1,2,3,4,5,6]
-current_animal=None
+aft_looting_boathouse=""
 health=100
-current_biome="Beach"
 hearts=health//20
 fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle",]
 unlocked_biomes={"Beach"}
@@ -15,6 +18,33 @@ entered=0
 new_branches=random.randint(1,10)
 
 
+def update_hunger(amount=5):
+    global hunger, health
+    hunger = max(0, hunger - amount)
+    if hunger == 0:
+        sp("You're starving! You lose 10 health.")
+        health -= 10
+    elif hunger <= 25:
+        sp("Your stomach growls... you need to eat soon.")
+
+def eat():
+    global hunger
+    foods = [f for f in FOOD_VALUES if inventory.get(f, 0) > 0]
+    if not foods:
+        sp("You have no food!")
+        return
+    for i, f in enumerate(foods, 1):
+        sp(f"[{i}] {f} x{inventory[f]} (+{FOOD_VALUES[f]} hunger)")
+    choice = input(" ").strip()
+    if choice.isdigit() and 1 <= int(choice) <= len(foods):
+        food = foods[int(choice) - 1]
+        inventory[food] -= 1
+        if inventory[food] == 0:
+            del inventory[food]
+        hunger = min(100, hunger + FOOD_VALUES[food])
+        sp(f"You eat the {food}. Hunger is now {hunger}.")
+    else:
+        sp("Invalid choice.")
 def sp(text, delay=0.03):
     for character in text:
         print(character, end='', flush=True)
@@ -47,21 +77,76 @@ def hunt():
     current_animal = None
 
 def animal_encounter():
-    global current_animal
+    global current_animal, health
 
-    encounter = random.randint(1, 100)
+    encounter = random.randint(4, 100)
 
-    if encounter <= 30:
+    if encounter >= 1:
         current_animal = random.choice(["Wild Boar", "Monkey", "Snake", "Tropical Bird"])
 
         sp(f"You encounter a {current_animal}!")
 
+        if current_animal == "Wild Boar" or current_animal == "Snake":
+            sp("This animal is dangerous! What will you do?")
+            sp("[1] Fight")
+            sp("[2] Run away")
+
+            choice = input(" ").strip()
+
+            if choice == "1":
+                if (inventory.get("Bow", 0) >= 20 and inventory.get("Arrow", 0) >= 20):
+                    sp("You use your bow and arrows to fight and obtain raw meat")
+                    inventory["Bow"] -= 2
+                    inventory["Arrow"] -= 20
+                    inventory["Raw Meat"]+=random.randint(1,6)
+                elif inventory.get("Stone Axe", 0) >= 20:
+                    sp("You use your Stone Axe to fight!")
+                    inventory["Stone Axe"] -= 20
+                    health-=random.randint(20,60)
+                    inventory["Raw Meat"]+=random.random(2,10)
+
+                elif inventory.get("Stone Knife", 0) >= 20:
+                    sp("You use your Stone Knife to fight!")
+                    inventory["Stone Knife"] -= 20
+                    health-=random.randint(20,60)
+                    if "Raw "
+                    inventory["Raw Meat"]+=random.random(2,10)
+                else:
+                    sp("You don't have a weapon with enough durability or arrows!")
+                    sp("You try to escape instead...")
+                    if random.randint(1, 2) == 1:
+                        sp("The animal catches you! You have been killed!")
+                        health = 0
+                        die()
+                    else:
+                        sp("You successfully escaped!")
+
+            elif choice == "2":
+                if random.randint(1, 2) == 1:
+                    sp("The animal catches you! You have been killed!")
+                    health = 0
+                else:
+                    sp("You successfully escaped!")
+
+            else:
+                sp("Invalid choice! The animal attacks while you hesitate!")
+                health = 0
+                die()
+        else:
+            sp("The animal isn't dangerous and leaves you alone.")
+
     else:
         sp("You explore the jungle but encounter no animals.")
+
+    current_animal = None
 def fishing():
     while True:
         loot = random.choice(fishing_loot)
-        fish=input("Press enter to attempt fishing")
+        fish=input("Press enter to attempt fishing, enter stop to stop fishing")
+        if fish=="stop":
+            break
+        else:
+            pass
         inventory["Fishing Rod"]-=2
         if loot == "empty":
             sp("Attempt failed, nothing found. Try again? (y/n)")
@@ -90,13 +175,14 @@ def fishing():
             else:
                 sp(f"{loot} discarded successfully")
 def boathouse():
+    global aft_looting_boathouse
     sp("You enter the boathouse, what next?\n[1] Investigate locked cupboard\n[2] Pick up available items")
     boathouse_ask=input(" ")
     if boathouse_ask=="1":
         global aft_looting_boathouse
         key_attempts=random.randint(1,10)
         for i in range(0,key_attempts):
-            sp("You insert the key you found at the shore into the lock, its pretty rusty and old so you try to yank it open")
+            print("You insert the key you found at the shore into the lock, its pretty rusty and old so you try to yank it open")
             key_attempt=input("Press enter to try opening the cupboard")
             if i<7:
                 print("Attempt failed, try again")
@@ -106,29 +192,50 @@ def boathouse():
         inventory["Gasoline Can"]=1
         sp("You explore the rest of the boathouse and find a map and 20 pieces of bread")
         inventory["Map"]=1
-        inventory["Bread"]+=20
+        inventory["Bread"]=20
         sp("You leave the boathouse, what next?\n[1] Explore Jungle \n[2] Follow map")
         aft_looting_boathouse=input(" ")
-    elif boathouse_ask==2:
+    elif boathouse_ask=="2":
         sp("You explore the rest of boathouse and find a map and 20 pieces of bread")
         inventory["Map"]=1
         inventory["Bread"]+=20
     else:
         print("Please enter a valid input")
+def open_map():
+    global current_biome
+    places = sorted(unlocked_biomes)
+
+    sp(f"You are in: {current_biome}")
+    sp("Where do you want to travel?")
+    for i, place in enumerate(places, 1):
+        sp(f"[{i}] {place}")
+
+    choice = input(" ").strip()
+    if choice.isdigit() and 1 <= int(choice) <= len(places):
+        destination = places[int(choice) - 1]
+        if destination == current_biome:
+            sp("You're already here!")
+        else:
+            sp(f"You travel to the {destination}...")
+            current_biome = destination
+            update_hunger(10)
+    else:
+        sp("You stay where you are.")
 def die():
+    global current_animal, health, current_biome, unlocked_biomes
+    global inventory, entered, new_branches, aft_looting_boathouse
+
     sp("You Died!")
-    structure_dice=[1,2,3,4,5,6]
-    current_animal=None
-    health=100
-    current_biome="Beach"
-    hearts=health//20
-    fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle",]
-    unlocked_biomes={"Beach"}
-    choices=[]
-    inventory={}
-    possibilities_for_entering=["1","2","3","4","5","6","7"]
-    entered=0
-    new_branches=random.randint(1,10)
+
+    current_animal = None
+    health = 100
+    current_biome = "Beach"
+    unlocked_biomes = {"Beach"}
+    inventory = {}
+    entered = 0
+    new_branches = random.randint(1, 10)
+    aft_looting_boathouse = ""
+    exit()
 def pi():
     sp(f"Inventory:{inventory}")
 def beach_explore():
@@ -204,6 +311,28 @@ Repair the helicopter and escape!
 
 
 """)
+REQUIRED_ITEMS = ["Gasoline Can", "Duct Tape", "Helicopter Manual"]
+
+def crash_site():
+    sp("You stand in front of the wrecked helicopter...")
+
+    missing = [item for item in REQUIRED_ITEMS if inventory.get(item, 0) <= 0]
+
+    if missing:
+        sp("You can't repair it yet. You still need:")
+        for item in missing:
+            sp(f"- {item}")
+        return
+
+    sp("You have everything you need! Start the repair? (y/n)")
+    answer = input(" ").strip().lower()
+    if answer == "y" or answer == "yes":
+        sp("You pour in the gasoline, tape up the damage and follow the manual...")
+        sp("The engine roars to life. You lift off and escape the island!")
+        sp("***** YOU WIN *****")
+        exit()
+    else:
+        sp("You step back from the helicopter.")
 
 def crafting_recipes():
     sp("""
@@ -346,18 +475,18 @@ def crafting_recipes():
             sp("You don't have enough materials to craft a campfire")
                 
 def main():
-    global entered, current_biome
+    global entered, current_biome, health, aft_looting_boathouse
     while True:
         print("Health:",health, "❤️ " * (health // 20))
         print("-----SURVIVAL ISLAND-----")
-        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Chop Trees \n[7] Open map ")
+        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Open Map\n[7] Eat ")
         if ask not in possibilities_for_entering:
             sp("Please enter a valid input ?????")
         elif (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
             new_explore(new_branches)
             entered += 1
 
-        elif (entered <= 3 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
+        elif (entered <= 2 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
             sp("You enter a jungle and pick up stones from the ground and vines dangling from trees")
             ran_stones = random.randint(1,5)
             ran_vines = random.randint(1,8)
@@ -366,7 +495,7 @@ def main():
             entered += 1
             current_biome="Jungle"
             unlocked_biomes.add("Jungle")
-        elif (entered > 3 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
+        elif (entered >= 3 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
             current_biome="Jungle"
             sp("Would you like to: \n[1] Explore deeper into the jungle?\n[2] Explore the beach shore more")
             jungle_or_beach=input(" ")
@@ -395,9 +524,11 @@ Would u like to enter? (y/n) """)
             else:
                 sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
                 Its a Key!""")
-                inventory["Key"]+=1
+                current_biome="Beach"
+                inventory["Key"]=1
                 sp("..........")
                 beach_explore()
+                global aft_looting_boathouse
                 if aft_looting_boathouse =="1":
                     sp("You follow the map up large hills")
                     unlocked_biomes.add("Large Hills")
@@ -424,7 +555,8 @@ Would u like to enter? (y/n) """)
                             health-=40
 
                     sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
-                    
+                    crash_site()
+                
 
 
         elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
@@ -445,6 +577,10 @@ Would u like to enter? (y/n) """)
                 sp("Acquire fishing rod first to start fishing")
             else:
                 sp("Acquire fishing rod and travel to a beach biome to start fishing")
-        elif ask=="7":
-            sp(f"{unlocked_biomes}")
+        elif ask=="6":
+            open_map()
+        elif ask == "7":
+            eat()
+
+            
 main()
