@@ -1,6 +1,7 @@
 import random
 import time
 
+hunger=100
 current_biome = "Beach"
 current_animal = None
 hunger = 100
@@ -9,14 +10,39 @@ structure_dice=[1,2,3,4,5,6]
 aft_looting_boathouse=""
 health=100
 hearts=health//20
-fishing_loot=["fish","seaweed","crab","empty","stone axe","empty bottle",]
+fishing_loot=["Fish","Seaweed","Crab","empty","stone axe","Empty Bottle"]
 unlocked_biomes={"Beach"}
 choices=[]
 inventory={}
-possibilities_for_entering=["1","2","3","4","5","6","7"]
+possibilities_for_entering=["1","2","3","4","5","6","7","8","9"]
 entered=0
 new_branches=random.randint(1,10)
+COOKABLE = {"Raw Meat": "Cooked Meat", "fish": "Fish", "crab": "Crab"}
 
+def cook():
+    if inventory.get("Campfire", 0) <= 0:
+        sp("You need a Campfire to cook! Craft one first.")
+        return
+
+    items = [f for f in COOKABLE if inventory.get(f, 0) > 0]
+    if not items:
+        sp("You have nothing to cook!")
+        return
+
+    sp("What do you want to cook?")
+    for i, f in enumerate(items, 1):
+        sp(f"[{i}] {f} x{inventory[f]}")
+    choice = input(" ").strip()
+
+    if choice.isdigit() and 1 <= int(choice) <= len(items):
+        raw = items[int(choice) - 1]
+        cooked = COOKABLE[raw]
+        amount = inventory[raw]          # cook the whole stack
+        del inventory[raw]
+        inventory[cooked] = inventory.get(cooked, 0) + amount
+        sp(f"You cook {amount} {raw} over the campfire and get {amount} {cooked}.")
+    else:
+        sp("Invalid choice.")
 
 def update_hunger(amount=5):
     global hunger, health
@@ -82,11 +108,11 @@ def animal_encounter():
     encounter = random.randint(4, 100)
 
     if encounter >= 1:
-        current_animal = random.choice(["Wild Boar", "Monkey", "Snake", "Tropical Bird"])
+        current_animal = random.choice(["Wild Boar", "Monkey", "Snake", "Vulture"])
 
         sp(f"You encounter a {current_animal}!")
 
-        if current_animal == "Wild Boar" or current_animal == "Snake":
+        if current_animal == "Wild Boar" or current_animal == "Snake" or current_animal=="Vulture":
             sp("This animal is dangerous! What will you do?")
             sp("[1] Fight")
             sp("[2] Run away")
@@ -109,7 +135,7 @@ def animal_encounter():
                     sp("You use your Stone Knife to fight!")
                     inventory["Stone Knife"] -= 20
                     health-=random.randint(20,60)
-                    if "Raw "
+                
                     inventory["Raw Meat"]+=random.random(2,10)
                 else:
                     sp("You don't have a weapon with enough durability or arrows!")
@@ -143,6 +169,7 @@ def fishing():
     while True:
         loot = random.choice(fishing_loot)
         fish=input("Press enter to attempt fishing, enter stop to stop fishing")
+        
         if fish=="stop":
             break
         else:
@@ -174,6 +201,9 @@ def fishing():
                 inventory[loot] = inventory.get(loot, 0) + 1
             else:
                 sp(f"{loot} discarded successfully")
+        if inventory.get("Fishing Rod",0)<="0":
+            sp("Your fishing rod broke! acquire a new one to start fishing again")
+            break
 def boathouse():
     global aft_looting_boathouse
     sp("You enter the boathouse, what next?\n[1] Investigate locked cupboard\n[2] Pick up available items")
@@ -387,7 +417,7 @@ def crafting_recipes():
     5x Vines
 ================================
     Infinite Durability
-    Can only be placed down once
+    Can be used forever
     Use: Cook food
 """)
     crafted_item=input("Choose the number of which item you wanna craft: ")
@@ -477,12 +507,16 @@ def crafting_recipes():
 def main():
     global entered, current_biome, health, aft_looting_boathouse
     while True:
+        
         print("Health:",health, "❤️ " * (health // 20))
+        print("Hunger:", hunger, "🍗" * (hunger//20))
         print("-----SURVIVAL ISLAND-----")
-        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Open Map\n[7] Eat ")
+        ask=input("Choose an action by entering its corresponding number:\n[1] Explore\n[2] Instructions\n[3] Show Inventory\n[4] View Crafting Recipes\n[5] Go Fishing\n[6] Open Map\n[7] Eat\n[8] Hunt\n[9] Cook food ")
         if ask not in possibilities_for_entering:
             sp("Please enter a valid input ?????")
-        elif (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
+            continue
+        update_hunger(5)
+        if (entered == 0 and ask == "1") or (entered == 0 and ask.strip().capitalize() == "Explore"):
             new_explore(new_branches)
             entered += 1
 
@@ -581,6 +615,29 @@ Would u like to enter? (y/n) """)
             open_map()
         elif ask == "7":
             eat()
-
-            
+        elif ask=="8" and (current_biome=="Jungle" or current_biome=="Large Hills") and "Stone Knife" in inventory:
+            hunt()
+        elif "Stone Knife" not in inventory:
+            sp("Acquire a stone knife to start hunting")
+        elif ask=="8" and current_biome!="Jungle" or current_biome!="Large Hills":
+            sp("Go to Large Hills or a Jungle biome to start hunting")
+        elif ask=="9":
+            cook()
+        if inventory.get("Stone Axe",0)==0:
+            inventory.pop("Stone Axe",None)
+        if inventory.get("Stone Knife",0)==0:
+            inventory.pop("Stone Knife",None)
+        if inventory.get("Bow",0)==0:
+            inventory.pop("Bow",None)
+        if inventory.get("Branches",0)==0:
+                inventory.pop("Branches",None)
+        if inventory.get("Bread",0)==0:
+            inventory.pop("Bread",None)
+        if inventory.get("Raw Meat",0)==0:
+                inventory.pop("Raw Meat",None)
+        if inventory.get("Stones",0)==0:
+                inventory.pop("Stones",None)
+        if health<=0:
+            die()
+        
 main()
