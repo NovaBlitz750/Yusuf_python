@@ -129,7 +129,7 @@ def animal_encounter():
                     sp("You use your Stone Axe to fight!")
                     inventory["Stone Axe"] -= 20
                     health-=random.randint(20,60)
-                    inventory["Raw Meat"]+=random.random(2,10)
+                    inventory["Raw Meat"] = inventory.get("Raw Meat", 0) + random.randint(2, 10)
 
                 elif inventory.get("Stone Knife", 0) >= 20:
                     sp("You use your Stone Knife to fight!")
