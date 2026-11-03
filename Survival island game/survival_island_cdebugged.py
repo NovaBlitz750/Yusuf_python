@@ -1,6 +1,8 @@
 import random
 import time
 
+win=False
+found_boathouse_key=False
 hunger=100
 hill_boar_fight=False
 current_biome = "Beach"
@@ -231,7 +233,7 @@ def boathouse():
         sp("You explore the rest of the boathouse and find a map and 20 pieces of bread")
         inventory["Map"]=1
         inventory["Bread"]=20
-        sp("You leave the boathouse, what next?\n[1] Open Map \n[2] Follow map")
+        sp("You leave the boathouse, what next?\n[1] Open Map \n[2] Follow the map")
         aft_looting_boathouse=input(" ")
         if aft_looting_boathouse=="1":
             open_map()
@@ -381,6 +383,7 @@ def crash_site():
             sp("Press enter to try and start helicopter....")
             helicopter_start=input("")
         sp("The Helciopter starts and the engine roars to life, you escape the island and reach a city\n     YOU WIN!")
+        win=True
     else:
         sp("You step back from the helicopter.")
 
@@ -527,7 +530,8 @@ def crafting_recipes():
 def main():
     global entered, current_biome, health, aft_looting_boathouse, hill_boar_fight
     while True:
-        
+        if win==True:
+            break
         print("Health:",health, "❤️ " * (health // 20))
         print("Hunger:", hunger, "🍗" * (hunger//20))
         print("-----SURVIVAL ISLAND-----")
@@ -576,18 +580,21 @@ Would u like to enter? (y/n) """)
                 else:
                     animal_encounter()
             else:
-                sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
-                Its a Key!""")
-                current_biome="Beach"
-                inventory["Key"]=1
-                sp("..........")
-                beach_explore()
-                if aft_looting_boathouse =="1" and not hill_boar_fight:
-                    sp("You follow the map up large hills")
-                    unlocked_biomes.add("Large Hills")
-                    current_biome="Large Hills"
-                    sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it")
-                    fight_or_flight=input(" ")
+                if found_boathouse_key==False:
+                    sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
+                    Its a Key!""")
+                    found_boathouse_key=True
+                else:
+                    current_biome="Beach"
+                    inventory["Key"]=1
+                    sp("..........")
+                    beach_explore()
+                    if aft_looting_boathouse =="2" and not hill_boar_fight:
+                        sp("You follow the map up large hills")
+                        unlocked_biomes.add("Large Hills")
+                        current_biome="Large Hills"
+                        sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it")
+                        fight_or_flight=input(" ")
                     if fight_or_flight=="1":
                         sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
                     elif fight_or_flight=="2":
@@ -610,8 +617,8 @@ Would u like to enter? (y/n) """)
 
                     sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
                     crash_site()
-                elif aft_looting_boathouse=="2" and hill_boar_fight:
-                    crash_site()
+                    if aft_looting_boathouse=="2" and hill_boar_fight:
+                        crash_site()
 
 
         elif ask=="3" or ask.strip().capitalize()=="Show Inventory":
@@ -619,10 +626,13 @@ Would u like to enter? (y/n) """)
                 sp("Your inventory is empty, start exploring to gather items")
             else:
                 pi()
+                hunger+=5
         elif ask=="2" or ask.strip().capitalize()=="Instructions":
             instructions()
+            hunger+=5
         elif ask=="4" or ask.strip().capitalize()=="View Crafting Recipes":
             crafting_recipes()
+            hunger+=5
         elif ask=="5" or ask.strip().capitalize()=="Go Fishing":
             if "Fishing Rod" in inventory and current_biome=="Beach":
                 fishing()
@@ -636,6 +646,7 @@ Would u like to enter? (y/n) """)
             open_map()
         elif ask == "7":
             eat()
+            hunger+=10
         elif ask=="8" and (current_biome=="Jungle" or current_biome=="Large Hills") and "Stone Knife" in inventory:
             hunt()
         elif "Stone Knife" not in inventory and ask=="8":
