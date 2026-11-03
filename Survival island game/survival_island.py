@@ -617,7 +617,7 @@ Would u like to enter? (y/n) """)
             eat()
         elif ask=="8" and (current_biome=="Jungle" or current_biome=="Large Hills") and "Stone Knife" in inventory:
             hunt()
-        elif "Stone Knife" not in inventory:
+        elif "Stone Knife" not in inventory and ask=="8":
             sp("Acquire a stone knife to start hunting")
         elif ask=="8" and current_biome!="Jungle" or current_biome!="Large Hills":
             sp("Go to Large Hills or a Jungle biome to start hunting")
