@@ -2,6 +2,8 @@ import random
 import time
 
 win=False
+looted_boathouse=False
+looted_cabin=False
 chopped_wood=0
 found_boathouse_key=False
 hunger=100
@@ -9,7 +11,7 @@ hill_boar_fight=False
 current_biome = "Beach"
 current_animal = None
 hunger = 100
-FOOD_VALUES = {"Bread": 10, "Fish": 15, "Crab": 10, "Cooked Meat": 30, "Raw Meat": 5}
+FOOD_VALUES = {"Bread": 10, "Fish": 15, "Crab": 10, "Cooked Meat": 30, "Raw Meat": 5, "Cooked Fish": 25, "Cooked Crab": 20}
 structure_dice=[1,2,3,4,5,6]
 aft_looting_boathouse=""
 health=100
@@ -21,7 +23,7 @@ inventory={}
 possibilities_for_entering=["1","2","3","4","5","6","7","8","9","10"]
 entered=0
 new_branches=random.randint(1,10)
-COOKABLE = {"Raw Meat": "Cooked Meat", "fish": "Fish", "crab": "Crab"}
+COOKABLE = {"Raw Meat": "Cooked Meat", "Fish": "Cooked Fish", "Crab": "Cooked Crab"}
 
 
 def regenerate_health():
@@ -240,45 +242,15 @@ def fishing():
         if inventory.get("Fishing Rod",0)<=0:
             sp("Your fishing rod broke! acquire a new one to start fishing again")
             break
-def boathouse():
-    global aft_looting_boathouse
-    sp("You enter the boathouse, what next?\n[1] Investigate locked cupboard\n[2] Pick up available items")
-    boathouse_ask=input(" ")
-    if boathouse_ask=="1":
-        global aft_looting_boathouse
-        key_attempts=random.randint(1,10)
-        for i in range(0,key_attempts):
-            print("You insert the key you found at the shore into the lock, its pretty rusty and old so you try to yank it open")
-            key_attempt=input("Press enter to try opening the cupboard")
-            if i<7:
-                print("Attempt failed, try again")
-        sp("Attempt successful, inside you find a gasoline can, duct tape and engine oil")
-        inventory["Engine Oil"]=1
-        inventory["Duct Tape"]=1
-        inventory["Gasoline Can"]=1
-        sp("You explore the rest of the boathouse and find a map and 20 pieces of bread")
-        inventory["Map"]=1
-        inventory["Bread"]=20
-        sp("You leave the boathouse, what next?\n[1] Open Map \n[2] Follow the map")
-        aft_looting_boathouse=input(" ")
-        if aft_looting_boathouse=="1":
-            open_map()
-    elif boathouse_ask=="2":
-        sp("You explore the rest of boathouse and find a map and 20 pieces of bread")
-        inventory["Map"]=1
-        inventory["Bread"]=inventory.get("Bread", 0)+20
-        
-    else:
-        print("Please enter a valid input")
 def open_map():
     global current_biome
     places = sorted(unlocked_biomes)
-
+    
     sp(f"You are in: {current_biome}")
     sp("Where do you want to travel?")
     for i, place in enumerate(places, 1):
         sp(f"[{i}] {place}")
-
+    
     choice = input(" ").strip()
     if choice.isdigit() and 1 <= int(choice) <= len(places):
         destination = places[int(choice) - 1]
@@ -289,7 +261,59 @@ def open_map():
             current_biome = destination
             update_hunger(10)
     else:
-        sp("You stay where you are.")
+            sp("You stay where you are.")
+def boathouse():
+    global aft_looting_boathouse, looted_boathouse
+    sp("You enter the boathouse, what next?\n[1] Investigate locked cupboard\n[2] Pick up available items")
+    
+    boathouse_ask=input(" ")
+    if boathouse_ask=="1":
+        key_attempts=random.randint(1,10)
+        for i in range(0,key_attempts):
+            print("You insert the key you found at the shore into the lock, its pretty rusty and old so you try to yank it open")
+            key_attempt=input("Press enter to try opening the cupboard")
+            if i<7:
+                print("Attempt failed, try again")
+        sp("Attempt successful, inside you find a gasoline can, duct tape and engine oil")
+        inventory["Engine Oil"]=1
+        inventory["Duct Tape"]=1
+        inventory["Gasoline Can"]=1
+        sp("You explore the rest of the boathouse and find a map and 10 pieces of bread")
+        inventory["Map"]=1
+        inventory["Bread"]=inventory.get("Bread",0)+10
+        looted_boathouse=True
+        sp("You leave the boathouse, what next?\n[1] Return to jungle \n[2] Follow the map")
+        aft_looting_boathouse=input(" ")
+        if aft_looting_boathouse=="1":
+            sp("You go back to the jungle")
+            deeper_explore=random.choice(structure_dice)
+            if deeper_explore==3:
+                sp("""You notice something in between the trees
+    
+           
+You discovered:
+AN ABANDONED CABIN!
+           
+           Would u like to enter? (y/n) """)
+                enter=input(" ").strip().lower()
+                if enter=="y" or enter=="yes":
+                    sp("You find wooden planks, bread and a helicopter manual inside!\n You read the manual and now can control a helicopter")
+                    inventory["Planks"]=15
+                    inventory["Bread"]=inventory.get("Bread",0)+10
+                                   
+                    inventory["Helicopter Manual"]=1
+                else:
+                        sp("You leave the cabin and continue exploring...")
+                        pass
+            else:
+               animal_encounter()
+    elif boathouse_ask=="2":
+        sp("You explore the rest of boathouse and find a map and 10 pieces of bread")
+        inventory["Map"]=1
+        inventory["Bread"]=inventory.get("Bread", 0)+10
+        
+    else:
+        print("Please enter a valid input")
 def die():
     global current_animal, health, current_biome, unlocked_biomes
     global inventory, entered, new_branches, aft_looting_boathouse
@@ -383,6 +407,7 @@ Repair the helicopter and escape!
 REQUIRED_ITEMS = ["Gasoline Can", "Duct Tape", "Helicopter Manual"]
 
 def crash_site():
+    global win
     sp("You stand in front of the wrecked helicopter...")
 
     missing = [item for item in REQUIRED_ITEMS if inventory.get(item, 0) <= 0]
@@ -515,7 +540,7 @@ def crafting_recipes():
 
     elif crafted_item=="4":
         if inventory.get("Branches",0)>=3 and inventory.get("Vines",0)>=3:
-            sp("You have enough materials to craft a fishing rod, would u like to proceed? (y/n) ")
+            sp("You have enough materials to craft a bow, would u like to proceed? (y/n) ")
             craft_bow=input(" ").strip().lower()
             if craft_bow=="y" or craft_bow=="yes":
                 inventory["Branches"]-=3
@@ -618,38 +643,40 @@ Would u like to enter? (y/n) """)
                     inventory["Key"]=1
                     sp("..........")
                     beach_explore()
-                    if aft_looting_boathouse =="2" and not hill_boar_fight:
-                        sp("You follow the map up large hills")
-                        unlocked_biomes.add("Large Hills")
-                        current_biome="Large Hills"
-                        sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it")
-                        fight_or_flight=input(" ")
-                        if fight_or_flight=="1":
-                            sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
-                            lost_health=random.randint(20,100)
-                            health-=lost_health
-                            sp(f"You lost {lost_health} health")
-                        elif fight_or_flight=="2":
-                            if (inventory.get("Bow",0)>=40 and inventory.get("Arrow",0)>=20):
-                                sp("You bow the arrow from a distance and kill the boar but consume 20 arrows in the process, raw meat obtained")
-                                inventory["Bow"]-=40
-                                inventory["Arrow"]-=20
-                                inventory["Raw Meat"]=random.randint(1,6)
-                            elif inventory.get("Stone Knife",0)>=20:
-                                sp("You rapidly attack the boar with your stone knife and obtain all of its raw meat")
-                                inventory["Stone Knife"]-=20
-                                inventory["Raw Meat"]=inventory.get("Raw Meat",0)+30
-                                health-=25
-                            elif inventory.get("Stone Axe",0)>=20:
-                                sp("You swing at the boar with your stone axe and obtain raw meat")
-                                inventory["Stone Axe"]-=20
-                                inventory["Raw Meat"]=inventory.get("Raw Meat",0)+random.randint(1,20)
-                                health-=40
-                        hill_boar_fight=True
+                    if aft_looting_boathouse=="2":
+                        if not hill_boar_fight:
+                            sp("You follow the map up large hills")
+                            unlocked_biomes.add("Large Hills")
+                            current_biome="Large Hills"
+                            sp("You encounter a wild boar! What will be your next decision?\n[1] Run Away\n[2] Fight it")
+                            fight_or_flight=input(" ")
+                            if fight_or_flight=="1":
+                                sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
+                                lost_health=random.randint(20,100)
+                                health-=lost_health
+                                sp(f"You lost {lost_health} health")
+                            elif fight_or_flight=="2":
+                                if (inventory.get("Bow",0)>=40 and inventory.get("Arrow",0)>=20):
+                                    sp("You bow the arrow from a distance and kill the boar but consume 20 arrows in the process, raw meat obtained")
+                                    inventory["Bow"]-=40
+                                    inventory["Arrow"]-=20
+                                    inventory["Raw Meat"]=random.randint(1,6)
+                                elif inventory.get("Stone Knife",0)>=20:
+                                    sp("You rapidly attack the boar with your stone knife and obtain all of its raw meat")
+                                    inventory["Stone Knife"]-=20
+                                    inventory["Raw Meat"]=inventory.get("Raw Meat",0)+30
+                                    health-=25
+                                elif inventory.get("Stone Axe",0)>=20:
+                                    sp("You swing at the boar with your stone axe and obtain raw meat")
+                                    inventory["Stone Axe"]-=20
+                                    inventory["Raw Meat"]=inventory.get("Raw Meat",0)+random.randint(1,20)
+                                    health-=40
+                                else:
+                                    sp("You have no weapon to fight with! The boar hits you")
+                                    health-=random.randint(20,60)
+                            hill_boar_fight=True
 
-                    sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
-                    crash_site()
-                    if aft_looting_boathouse=="2" and hill_boar_fight:
+                        sp("After the journey up the mountain, you find.... THE HELCIPOTER CRASH SITE")
                         crash_site()
 
 
@@ -658,13 +685,13 @@ Would u like to enter? (y/n) """)
                 sp("Your inventory is empty, start exploring to gather items")
             else:
                 pi()
-                hunger+=5
+                hunger=min(100,hunger+5)
         elif ask=="2" or ask.strip().capitalize()=="Instructions":
             instructions()
-            hunger+=5
+            hunger=min(100,hunger+5)
         elif ask=="4" or ask.strip().capitalize()=="View Crafting Recipes":
             crafting_recipes()
-            hunger+=5
+            hunger=min(100,hunger+5)
         elif ask=="5" or ask.strip().capitalize()=="Go Fishing":
             if "Fishing Rod" in inventory and current_biome=="Beach":
                 fishing()
@@ -678,7 +705,7 @@ Would u like to enter? (y/n) """)
             open_map()
         elif ask == "7":
             eat()
-            hunger+=5
+            hunger=min(100,hunger+5)
         elif ask=="8" and (current_biome=="Jungle" or current_biome=="Large Hills") and "Stone Knife" in inventory:
             hunt()
         elif "Stone Knife" not in inventory and ask=="8":
