@@ -337,7 +337,8 @@ def beach_explore():
     beach_dice = random.randint(1, 6)
 
     if beach_dice == 3 or beach_dice==4:
-        sp("""
+        if looted_boathouse==False:
+            sp("""
 You notice a strange wooden building
 near the shoreline...
 
@@ -346,12 +347,14 @@ ABANDONED BOATHOUSE!
 Would you like to enter? (y/n)
 """)
 
-        enter = input(" ").strip().lower()
+            enter = input(" ").strip().lower()
 
-        if enter == "y" or enter == "yes":
-            boathouse()
-        else:
-            sp("You leave the boathouse and continue exploring...")
+            if enter == "y" or enter == "yes":
+                boathouse()
+            else:
+                sp("You leave the boathouse and continue exploring...")
+        elif looted_boathouse==True:
+            crash_site()
     else:
         sp("You find some shells and driftwood along the shore.")
 def new_explore(new_branches):
@@ -612,25 +615,26 @@ def main():
             sp("Would you like to: \n[1] Explore deeper into the jungle?\n[2] Explore the beach shore more")
             jungle_or_beach=input(" ")
             if jungle_or_beach=="1":
-                sp("You explore deeper into the jungle...")
-                deeper_explore=random.choice(structure_dice)
-                if deeper_explore==3:
-                    sp("""You notice something in between the trees
+                if looted_cabin==False:
+                    sp("You explore deeper into the jungle...")
+                    deeper_explore=random.choice(structure_dice)
+                    if deeper_explore==3:
+                        sp("""You notice something in between the trees
 
 You discovered:
 AN ABANDONED CABIN!
 
 Would u like to enter? (y/n) """)
-                    enter=input(" ").strip().lower()
-                    if enter=="y" or enter=="yes":
-                        sp("You find wooden planks, bread and a helicopter manual inside!\n You read the manual and now can control a helicopter")
-                        inventory["Planks"]=15
-                        inventory["Bread"]=30
+                        enter=input(" ").strip().lower()
+                        if enter=="y" or enter=="yes":
+                            sp("You find wooden planks, bread and a helicopter manual inside!\n You read the manual and now can control a helicopter")
+                            inventory["Planks"]=15
+                            inventory["Bread"]=30
                         
-                        inventory["Helicopter Manual"]=1
-                    else:
-                        sp("You leave the cabin and continue exploring...")
-                        pass
+                            inventory["Helicopter Manual"]=1
+                        else:
+                            sp("You leave the cabin and continue exploring...")
+                            pass
                 else:
                     animal_encounter()
             else:
@@ -642,6 +646,7 @@ Would u like to enter? (y/n) """)
                     current_biome="Beach"
                     inventory["Key"]=1
                     sp("..........")
+                
                     beach_explore()
                     if aft_looting_boathouse=="2":
                         if not hill_boar_fight:
