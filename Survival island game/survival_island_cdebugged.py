@@ -583,8 +583,10 @@ def crafting_recipes():
             sp("You don't have enough materials to craft a campfire")
                 
 def main():
+    # FIX: looted_cabin added to the globals. Before, it was never declared here,
+    # so assigning looted_cabin=True inside main() would only have made a local variable.
     global entered, current_biome, health, aft_looting_boathouse
-    global hill_boar_fight, hunger, found_boathouse_key, chopped_wood
+    global hill_boar_fight, hunger, found_boathouse_key, chopped_wood, looted_cabin
     while True:
         if win==True:
             break
@@ -610,15 +612,15 @@ def main():
             entered += 1
             current_biome="Jungle"
             unlocked_biomes.add("Jungle")
-        elif (entered >= 3 and ask == "1") or (entered >= 1 and ask.strip().capitalize() == "Explore"):
-            current_biome="Jungle"
-            sp("Would you like to: \n[1] Explore deeper into the jungle?\n[2] Explore the beach shore more")
-            jungle_or_beach=input(" ")
-            if jungle_or_beach=="1":
-                if looted_cabin==False:
+        elif entered >= 3 and ask == "1":
+                current_biome="Jungle"
+                sp("Would you like to: \n[1] Explore deeper into the jungle?\n[2] Explore the beach shore more")
+                jungle_or_beach=input(" ")
+                if jungle_or_beach=="1":
+                    
                     sp("You explore deeper into the jungle...")
                     deeper_explore=random.choice(structure_dice)
-                    if deeper_explore==3:
+                    if deeper_explore==3 and looted_cabin==False:
                         sp("""You notice something in between the trees
 
 You discovered:
@@ -630,24 +632,25 @@ Would u like to enter? (y/n) """)
                             sp("You find wooden planks, bread and a helicopter manual inside!\n You read the manual and now can control a helicopter")
                             inventory["Planks"]=15
                             inventory["Bread"]=30
-                        
+
                             inventory["Helicopter Manual"]=1
+                            looted_cabin=True  # FIX: mark the cabin as looted so it can only be looted once
                         else:
                             sp("You leave the cabin and continue exploring...")
                             pass
+                    else:
+                        animal_encounter()
                 else:
-                    animal_encounter()
-            else:
-                if found_boathouse_key==False:
-                    sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
-                    Its a Key!""")
-                    found_boathouse_key=True
-                else:
-                    current_biome="Beach"
-                    inventory["Key"]=1
-                    sp("..........")
+                    if found_boathouse_key==False:
+                        sp("""You keep walking along the edge of the beach and see something hidden in the sand...' 
+                        Its a Key!""")
+                        found_boathouse_key=True
+                    else:
+                        current_biome="Beach"
+                        inventory["Key"]=1
+                        sp("..........")
                 
-                    beach_explore()
+                        beach_explore()
                     if aft_looting_boathouse=="2":
                         if not hill_boar_fight:
                             sp("You follow the map up large hills")
