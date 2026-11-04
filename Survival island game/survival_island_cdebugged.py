@@ -410,6 +410,7 @@ def crash_site():
             helicopter_start=input("")
         sp("The Helciopter starts and the engine roars to life, you escape the island and reach a city\n     YOU WIN!")
         win=True
+        exit()
     else:
         sp("You step back from the helicopter.")
 
@@ -625,6 +626,9 @@ Would u like to enter? (y/n) """)
                         fight_or_flight=input(" ")
                         if fight_or_flight=="1":
                             sp("You started running and make the boar aggressive, it chases you and hits you down the hill")
+                            lost_health=random.randint(20,100)
+                            health-=lost_health
+                            sp(f"You lost {lost_health} health")
                         elif fight_or_flight=="2":
                             if (inventory.get("Bow",0)>=40 and inventory.get("Arrow",0)>=20):
                                 sp("You bow the arrow from a distance and kill the boar but consume 20 arrows in the process, raw meat obtained")
